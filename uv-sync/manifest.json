@@ -1,0 +1,34 @@
+{
+  "manifest_version": 2,
+
+  "name": "UV Sync 书签云同步插件",
+  "description": "UV Sync 书签云同步插件",
+  "version": "1.0",
+
+  "browser_action": {
+    "default_icon": "index4.png",
+    "default_popup": "popup.html"
+  },
+  "background": {
+    "page": "popup.html"
+  },
+  "permissions": [
+    "tabs",
+    "activeTab",
+    "storage",
+    "bookmarks",
+    "management",
+    "http://*/*"
+  ],
+  "content_scripts": [
+    {
+      "run_at": "document_start",
+      "matches": [
+        "http://*/*",
+        "https://*/*"
+      ],
+      "js": ["core.js"],
+      "all_frames": true
+    }
+  ]
+}
