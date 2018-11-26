@@ -5,6 +5,10 @@
   "description": "UV Sync 书签云同步插件",
   "version": "1.0",
 
+  "icons": 
+  {            
+    "128": "index4.png" 
+  },  
   "browser_action": {
     "default_icon": "index4.png",
     "default_popup": "popup.html"
