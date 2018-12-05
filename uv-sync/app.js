@@ -1,6 +1,11 @@
 (function () {
   // var urlRoot = "http://localhost:80";
   var urlRoot = "http://webpan.fast-page.org:80";
+
+  $("#tmp").load("http://webpan.fast-page.org/?i=1",function(re){
+    //alert(re);
+  });
+  
   var firstCheck = false;
   function toggleMode(type) {
     switch (type) {
@@ -199,7 +204,7 @@
               if (re.code === 200 && re.needUpdate) {
                 DataKeeper.setData("last", hash);
                 document.getElementById("lasttime").value = DataKeeper.getData("last");
-              } else {
+              } else if(re.code===500) {
                 if (re.info) {
                   alert(re.info);
                 }
@@ -280,9 +285,7 @@
     }
   });
 
-  $("#tmp").load("http://webpan.fast-page.org/?i=1",function(re){
-    //alert(re);
-  });
+  
 
 
   if (!DataKeeper.getData("islogin")) {
