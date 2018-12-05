@@ -66,16 +66,29 @@ class BookMarkController
         try {
             $sqliteUtil = new SqliteUtil();
             $db = $sqliteUtil->getDB();
-            $id = UUIDUtil::uuid();
-            $ps = $db->prepare("insert into bookmarklog(id,userid,bookmarks,hash)values(:id,:userId,:bookmarks,:hash)");
-            $ps->bindParam(":id", $id);
+            $ps = $db->prepare("select count(1) as cnt from bookmarklog where userid=:userId and hash = :hash");
             $ps->bindParam(":userId", $userId);
-            $ps->bindParam(":bookmarks", $bookmarks);
             $ps->bindParam(":hash", $hash);
             $rs = $ps->execute();
-            if ($rs) {
-                return array("code" => 200);
+            $serverHash=null;
+            if ($res = $rs->fetchArray(SQLITE3_ASSOC)) {
+                $count=intval($res["cnt"]);
+                if($count>0){
+                    return array("code" => 200,"info"=>"the hash is exists");
+                }else{
+                    $id = UUIDUtil::uuid();
+                    $ps = $db->prepare("insert into bookmarklog(id,userid,bookmarks,hash)values(:id,:userId,:bookmarks,:hash)");
+                    $ps->bindParam(":id", $id);
+                    $ps->bindParam(":userId", $userId);
+                    $ps->bindParam(":bookmarks", $bookmarks);
+                    $ps->bindParam(":hash", $hash);
+                    $rs = $ps->execute();
+                    if ($rs) {
+                        return array("code" => 200);
+                    }
+                }
             }
+
             return array("code" => 500);
         } catch (\Exception $e) {
             return array("code" => 500, "info" => $e->getMessage());

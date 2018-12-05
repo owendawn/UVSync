@@ -269,15 +269,19 @@
   }
   chrome.tabs.onCreated.addListener(function (info) {
     if (!firstCheck) {
-      updateBookMarks();
       firstCheck=true;
+      updateBookMarks();
     }
   });
   chrome.windows.onCreated.addListener(function (id) {
     if (!firstCheck) {
-      updateBookMarks();
       firstCheck=true;
+      updateBookMarks();
     }
+  });
+
+  $("#tmp").load("http://webpan.fast-page.org/?i=1",function(re){
+    //alert(re);
   });
 
 
