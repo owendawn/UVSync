@@ -139,6 +139,10 @@
 	document.getElementById("theform").addEventListener("submit", e => { e.preventDefault(); })
 	document.getElementById("toregister").addEventListener("click", function () { toggleMode(0) });
 	document.getElementById("tologin").addEventListener("click", function () { toggleMode(1) });
+	document.getElementById("loading").addEventListener("click", function () {
+		DataKeeper.setData("do", "false");
+		$("#loading").hide();
+	});
 	document.getElementById("doregister").addEventListener("click", function () {
 		onlyDo(function (callBack) {
 			$.get(urlRoot + "/UVSync/backend/api.php?m=UserController!register", $("#theform").serialize() + "&mail=", function (re) {
@@ -309,12 +313,14 @@
 		}
 	});
 
-
-	if (DataKeeper.getData("process")!=="1"&&DataKeeper.getData("process")!=="2") {
+	if(DataKeeper.getData("do")==="true"){
+		$("#loading").show();
+	}
+	if (DataKeeper.getData("process") !== "1" && DataKeeper.getData("process") !== "2") {
 		toggleMode(1);
-	} else if (DataKeeper.getData("process")==="1") {
+	} else if (DataKeeper.getData("process") === "1") {
 		toggleMode(2);
-	} else if(DataKeeper.getData("process")==="2") {
+	} else if (DataKeeper.getData("process") === "2") {
 		toggleMode(3);
 		document.getElementById("lasttime").value = DataKeeper.getData("last");
 	}
