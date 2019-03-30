@@ -19,6 +19,10 @@
   <div id="tmp" style="display:none;"></div>
   <div class="am-g myapp-login">
     <div class="myapp-login-bg">
+      <div class="spinner" id="loading" style="display:none;">
+        <div class="dot1"></div>
+        <div class="dot2"></div>
+      </div>
       <div class="myapp-login-logo">
         <i class="am-icon-stumbleupon" id="logo"></i>
       </div>
@@ -27,14 +31,14 @@
           <fieldset style="margin-bottom:0;padding-top: 0;padding-bottom: 0;">
             <div id="commonmode">
               <div class="am-form-group">
-                <input type="email" name="name" value="" placeholder="username">
+                <input type="text" name="name" value="" placeholder="username">
               </div>
               <div class="am-form-group">
-                <input type="password" name="password"  value="" placeholder="password">
+                <input type="password" name="password" value="" placeholder="password">
               </div>
             </div>
             <div class="am-form-group" id="registermode">
-              <input type="password" name="passwordcheck"  value="" placeholder="password again">
+              <input type="password" name="passwordcheck" value="" placeholder="password again">
               <p><button class="am-btn am-btn-default" id="doregister">Register</button></p>
               <div class="login-text">
                 <a class="text-white" id="tologin">Already has a account?</a>
@@ -59,7 +63,8 @@
                 <input type="text" class="" id="lasttime" value="" placeholder=" - - ">
               </div>
               <p><button class="am-btn am-btn-default" id="domerge" style="margin-top:10px;">merge</button></p>
-              <p><button class="am-btn am-btn-default" id="dosynchronize" style="margin-top:10px;">synchronize</button></p>
+              <p><button class="am-btn am-btn-default" id="dosynchronize" style="margin-top:10px;">synchronize</button>
+              </p>
               <a class="text-white" id="dologout">logout?</a>
             </div>
           </fieldset>

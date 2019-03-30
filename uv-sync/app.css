@@ -1,5 +1,25 @@
 /* Write your styles */
-html,body { background: rgb(42,144,223);}
+html,body { background: rgb(42,144,223);padding:0;margin:0!important;}
+/* 动画 */
+.spinner {  position: absolute;top: 10px;left: 15px; width: 30px; height: 30px; text-align: center;   -webkit-animation: rotate 2.0s infinite linear; animation: rotate 2.0s infinite linear;}
+.dot1, .dot2 {  width: 60%; height: 60%; display: inline-block; position: absolute; top: 0; background-color: #ffffff; border-radius: 100%;-webkit-animation: bounce 2.0s infinite ease-in-out;animation: bounce 2.0s infinite ease-in-out; }
+.dot2 { top: auto; bottom: 0px; -webkit-animation-delay: -1.0s; animation-delay: -1.0s;}
+@-webkit-keyframes rotate { 100% { -webkit-transform: rotate(360deg) }}
+@keyframes rotate { 100% { transform: rotate(360deg); -webkit-transform: rotate(360deg) }}  
+@-webkit-keyframes bounce {
+    0%, 100% { -webkit-transform: scale(0.0) }
+    50% { -webkit-transform: scale(1.0) }
+}
+@keyframes bounce {
+    0%, 100% {
+        transform: scale(0.0);
+        -webkit-transform: scale(0.0);
+    } 
+    50% {
+        transform: scale(1.0);
+        -webkit-transform: scale(1.0);
+    }
+}
 /* 登陆logo */
 .myapp-login { background: url(bg.jpg) rgb(42,144,223) top no-repeat; background-size: 100%; height: 100%;}
 .myapp-login .myapp-login-bg { padding-top: 30px;  height: 100%;}
