@@ -7,6 +7,7 @@
 	});
 
 	var firstCheck = false;
+	var pageNum=1;
 	function hasBookMark(it, p, fun) {
 		chrome.bookmarks.search(it.title, function (re) {
 			var flag = -1;
@@ -316,15 +317,22 @@
 	});
 	document.getElementById("toHistory").addEventListener("click", function () {
 		onlyDo(function (callBack) {
-			$.post(urlRoot + "/UVSync/backend/api.php?m=BookMarkController!getBookMarkHistory", { token: DataKeeper.getData("token") }, function (re) {
-				callBack();
-				$("#history").html(re.data.map(function (it, idx, all) {
-					return '<div class="text-white">' + it.hash
-						+ '<a class="pull-right text-white bookmark-back" data-id="' + it.id + '" data-hash="' + it.hash + '" data-props="' + encodeURIComponent(it.bookmarks) + '">☚</a></div>';
-				}).join(""));
-				activeBookmarkRollback();
-				toggleMode(4)
-			}, "json");
+			showHistory(pageNum,callBack);
+		});
+	});
+	document.getElementById("toPrev").addEventListener("click", function () {
+		onlyDo(function (callBack) {
+			pageNum--;
+			if(pageNum<=1){
+				pageNum=1;
+			}
+			showHistory(pageNum,callBack);
+		});
+	});
+	document.getElementById("toNext").addEventListener("click", function () {
+		onlyDo(function (callBack) {
+			pageNum++;
+			showHistory(pageNum,callBack);
 		});
 	});
 
@@ -336,6 +344,18 @@
 		toggleMode(1);
 	});
 
+	function showHistory(pageNum,callBack){
+		$.post(urlRoot + "/UVSync/backend/api.php?m=BookMarkController!getBookMarkHistory", { token: DataKeeper.getData("token"),pageNum:pageNum }, function (re) {
+			callBack();
+			$("#history").html(re.data.map(function (it, idx, all) {
+				return '<div class="text-white">' + it.hash
+					+ '<a class="pull-right text-white bookmark-back" data-id="' + it.id + '" data-hash="' + it.hash + '" data-props="' + encodeURIComponent(it.bookmarks) + '">☚</a></div>';
+			}).join(""));
+			activeBookmarkRollback();
+			toggleMode(4)
+			$("#pageNum").html("- "+pageNum+" -");
+		}, "json");
+	}
 
 
 	function activeBookmarkRollback() {
@@ -349,7 +369,7 @@
 						hash: this.getAttribute("data-hash"),
 						id: this.getAttribute("data-id")
 					});
-					DataKeeper.setData("last", this.getAttribute("data-hash"));
+					DataKeeper.setData("last", PanUtil.dateFormat.format(new Date(), 'yyyy-MM-dd HH:mm:ss'));
 					$("#dosynchronize").trigger("click");
 					toggleMode(3);
 				}

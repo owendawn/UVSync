@@ -98,6 +98,7 @@ class BookMarkController
     public function getBookMarkHistory()
     {
         $token = $_REQUEST["token"];
+        $pageNum = $_REQUEST["pageNum"];
         $jwtUtil = new JwtUtil();
         $jwt = $jwtUtil->parseJwt($token);
 
@@ -106,7 +107,7 @@ class BookMarkController
             $sqliteUtil = new SqliteUtil();
             $db = $sqliteUtil->getDB();
             $id = UUIDUtil::uuid();
-            $ps = $db->prepare("select * from bookmarklog where userid=:userId order by create_at desc limit 10 offset 0");
+            $ps = $db->prepare("select * from bookmarklog where userid=:userId order by create_at desc limit 10 offset ".(intval($pageNum)-1)*10);
             $ps->bindParam(":userId", $userId);
 
             $rs = $ps->execute();

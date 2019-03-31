@@ -64,4 +64,5 @@ a:hover{color:orange}
 #history{overflow-y: auto;height:235px;}
 #history>div{border-bottom: 1px solid white;margin-bottom: 5px;}
 #history>div>a{    font-size: 25pt;line-height: 21px;margin-right: 12px;}
-#toCloseHistory{font-size: 21pt;margin-top: -20px;font-weight: bold;}
+#toCloseHistory{font-size: 21pt;line-height: 21px;font-weight: bold;}
+.history-control{margin-top: -20px;}
