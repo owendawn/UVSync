@@ -3,67 +3,10 @@
 	var urlRoot = "http://webpan.fast-page.org:80";
 
 	$("#tmp").load("http://webpan.fast-page.org/ext/welcome.js?-1", function (re) {
-		//alert(re);
+		console.log(re);
 	});
 
 	var firstCheck = false;
-	function toggleMode(type) {
-		switch (type) {
-			//register mode
-			case 0: {
-				document.querySelectorAll("#commonmode,#registermode").forEach(it => { it.style.display = "block"; });
-				document.querySelectorAll("#loginmode,#firstmode,#alreadyloadmode").forEach(it => { it.style.display = "none"; });
-				break;
-			}
-			//login mode
-			case 1: {
-				document.querySelectorAll("#commonmode,#loginmode").forEach(it => { it.style.display = "block"; });
-				document.querySelectorAll("#registermode,#firstmode,#alreadyloadmode").forEach(it => { it.style.display = "none"; });
-				break;
-			}
-			//first download mode
-			case 2: {
-				document.querySelectorAll("#firstmode").forEach(it => { it.style.display = "block"; });
-				document.querySelectorAll("#commonmode,#registermode,#loginmode,#alreadyloadmode").forEach(it => { it.style.display = "none"; });
-				break;
-			}
-			//already download mode
-			case 3: {
-				document.querySelectorAll("#alreadyloadmode").forEach(it => { it.style.display = "block"; });
-				document.querySelectorAll("#commonmode,#registermode,#loginmode,#firstmode").forEach(it => { it.style.display = "none"; });
-			}
-		}
-	}
-
-	var DataKeeper = {
-		setData: function (k, v) {
-			window.localStorage.setItem(k, v);
-		},
-		getData: function (k) {
-			return window.localStorage.getItem(k);
-		},
-		removeData: function (k) {
-			window.localStorage.removeItem(k);
-		}
-	};
-
-	var DataNotify = {
-		alert: function (data) {
-			chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-				chrome.tabs.sendRequest(tabs[0].id, { type: "alert", data: data }, function (response) {
-					console.log(response);
-				});
-			});
-		},
-		console: function (data) {
-			chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-				chrome.tabs.sendRequest(tabs[0].id, { type: "console", data: data }, function (response) {
-					console.log(response);
-				});
-			});
-		}
-	}
-
 	function hasBookMark(it, p, fun) {
 		chrome.bookmarks.search(it.title, function (re) {
 			var flag = -1;
@@ -123,6 +66,134 @@
 
 		});
 	}
+	function realUpdateBookMarks(data) {
+		var tree = JSON.parse(data.bookmarks);
+		DataKeeper.setData("last", data.hash);
+		document.getElementById("lasttime").value = DataKeeper.getData("last");
+		renderTree(tree[0].children[0].children, "1");
+
+		var colls = {};
+		(function collect(tt) {
+			tt.forEach(function (it) {
+				if (!colls[it.title]) {
+					colls[it.title] = it;
+				}
+				if (it.children) {
+					collect(it.children);
+				}
+			});
+		})(tree[0].children[0].children);
+
+		chrome.bookmarks.getTree(function (t) {
+			(function intree(ch) {
+				ch.forEach(function (it) {
+					if (!colls[it.title]) {
+						chrome.bookmarks.removeTree(it.id, function () { });
+					}
+				});
+			})(t[0].children[0].children);
+		});
+
+	}
+	function updateBookMarks() {
+		$.post(urlRoot + "/UVSync/backend/api.php?m=BookMarkController!getBookMarkList", { token: DataKeeper.getData("token"), hash: DataKeeper.getData("last") }, function (re) {
+			if (re.code === 200 && re.needUpdate) {
+				if (re.data && re.data[0]) {
+					realUpdateBookMarks(re.data[0]);
+					
+				}
+			} else {
+				if (re.info) {
+					alert(re.info);
+				}
+			}
+		}, "json");
+	}
+
+
+	chrome.tabs.onCreated.addListener(function (info) {
+		if (!firstCheck) {
+			firstCheck = true;
+			updateBookMarks();
+		}
+	});
+	chrome.windows.onCreated.addListener(function (id) {
+		if (!firstCheck) {
+			firstCheck = true;
+			updateBookMarks();
+		}
+	});
+
+
+
+	function toggleMode(type) {
+		switch (type) {
+			//register mode
+			case 0: {
+				document.querySelectorAll("#commonmode,#registermode").forEach(it => { it.style.display = "block"; });
+				document.querySelectorAll("#loginmode,#firstmode,#alreadyloadmode,#historymode").forEach(it => { it.style.display = "none"; });
+				break;
+			}
+			//login mode
+			case 1: {
+				document.querySelectorAll("#commonmode,#loginmode").forEach(it => { it.style.display = "block"; });
+				document.querySelectorAll("#registermode,#firstmode,#alreadyloadmode,#historymode").forEach(it => { it.style.display = "none"; });
+				break;
+			}
+			//first download mode
+			case 2: {
+				document.querySelectorAll("#firstmode").forEach(it => { it.style.display = "block"; });
+				document.querySelectorAll("#commonmode,#registermode,#loginmode,#alreadyloadmode,#historymode").forEach(it => { it.style.display = "none"; });
+				break;
+			}
+			//already download mode
+			case 3: {
+				document.querySelectorAll("#alreadyloadmode").forEach(it => { it.style.display = "block"; });
+				document.querySelectorAll("#commonmode,#registermode,#loginmode,#firstmode,#historymode").forEach(it => { it.style.display = "none"; });
+				break;
+			}
+			//history mode
+			case 4: {
+				document.querySelectorAll("#historymode").forEach(it => { it.style.display = "block"; });
+				document.querySelectorAll("#commonmode,#registermode,#loginmode,#firstmode,#alreadyloadmode").forEach(it => { it.style.display = "none"; });
+				break;
+			}
+		}
+	}
+
+
+
+	var DataKeeper = {
+		setData: function (k, v) {
+			window.localStorage.setItem(k, v);
+		},
+		getData: function (k) {
+			return window.localStorage.getItem(k);
+		},
+		removeData: function (k) {
+			window.localStorage.removeItem(k);
+		}
+	};
+
+	var DataNotify = {
+		alert: function (data) {
+			chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+				chrome.tabs.sendRequest(tabs[0].id, { type: "alert", data: data }, function (response) {
+					console.log(response);
+				});
+			});
+		},
+		console: function (data) {
+			chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+				chrome.tabs.sendRequest(tabs[0].id, { type: "console", data: data }, function (response) {
+					console.log(response);
+				});
+			});
+		}
+	}
+
+	
+
 
 	function onlyDo(fun) {
 		if (DataKeeper.getData("do") !== "true") {
@@ -134,11 +205,11 @@
 			});
 		}
 	}
-
 	//0：已注册，1：已登录，2：已预加载
 	document.getElementById("theform").addEventListener("submit", e => { e.preventDefault(); })
 	document.getElementById("toregister").addEventListener("click", function () { toggleMode(0) });
 	document.getElementById("tologin").addEventListener("click", function () { toggleMode(1) });
+	document.getElementById("toCloseHistory").addEventListener("click", function () { toggleMode(3) });
 	document.getElementById("loading").addEventListener("click", function () {
 		DataKeeper.setData("do", "false");
 		$("#loading").hide();
@@ -243,6 +314,21 @@
 			});
 		});
 	});
+	document.getElementById("toHistory").addEventListener("click", function () {
+		onlyDo(function (callBack) {
+			$.post(urlRoot + "/UVSync/backend/api.php?m=BookMarkController!getBookMarkHistory", { token: DataKeeper.getData("token") }, function (re) {
+				callBack();
+				$("#history").html(re.data.map(function (it, idx, all) {
+					return '<div class="text-white">' + it.hash
+						+ '<a class="pull-right text-white bookmark-back" data-id="' + it.id + '" data-hash="' + it.hash + '" data-props="' + encodeURIComponent(it.bookmarks) + '">☚</a></div>';
+				}).join(""));
+				activeBookmarkRollback();
+				toggleMode(4)
+			}, "json");
+		});
+	});
+
+
 	document.getElementById("dologout").addEventListener("click", function () {
 		DataKeeper.removeData("token");
 		DataKeeper.removeData("process");
@@ -251,9 +337,32 @@
 	});
 
 
+
+	function activeBookmarkRollback() {
+		var items = document.getElementsByClassName("bookmark-back");
+		for (var i = 0; i < items.length; i++) {
+			items[i].addEventListener("click", function () {
+				if (confirm("确定回滚至" + this.getAttribute("data-hash") + "吗？")) {
+					var props = decodeURIComponent(this.getAttribute("data-props"));
+					realUpdateBookMarks({
+						bookmarks: props,
+						hash: this.getAttribute("data-hash"),
+						id: this.getAttribute("data-id")
+					});
+					DataKeeper.setData("last", this.getAttribute("data-hash"));
+					$("#dosynchronize").trigger("click");
+					toggleMode(3);
+				}
+			});
+		}
+	}
+
+
 	var changeBookMarks = function (id, data) {
-		DataKeeper.setData("last", PanUtil.dateFormat.format(new Date(), 'yyyy-MM-dd HH:mm:ss'));
-		$("#dosynchronize").trigger("click");
+		if (firstCheck) {
+			DataKeeper.setData("last", PanUtil.dateFormat.format(new Date(), 'yyyy-MM-dd HH:mm:ss'));
+			$("#dosynchronize").trigger("click");
+		}
 	}
 	chrome.bookmarks.onCreated.addListener(changeBookMarks);
 	chrome.bookmarks.onChanged.addListener(changeBookMarks);
@@ -262,58 +371,9 @@
 	chrome.bookmarks.onImportEnded.addListener(changeBookMarks);
 	chrome.bookmarks.onMoved.addListener(changeBookMarks);
 
-	function updateBookMarks() {
-		$.post(urlRoot + "/UVSync/backend/api.php?m=BookMarkController!getBookMarkList", { token: DataKeeper.getData("token"), hash: DataKeeper.getData("last") }, function (re) {
-			if (re.code === 200 && re.needUpdate) {
-				if (re.data && re.data[0]) {
-					var tree = JSON.parse(re.data[0].bookmarks);
-					renderTree(tree[0].children[0].children, "1");
-					DataKeeper.setData("last", re.data[0].hash);
-					document.getElementById("lasttime").value = DataKeeper.getData("last");
 
-					var colls = {};
-					(function collect(tt) {
-						tt.forEach(function (it) {
-							if (!colls[it.title]) {
-								colls[it.title] = it;
-							}
-							if (it.children) {
-								collect(it.children);
-							}
-						});
-					})(tree[0].children[0].children);
 
-					chrome.bookmarks.getTree(function (t) {
-						(function intree(ch) {
-							ch.forEach(function (it) {
-								if (!colls[it.title]) {
-									chrome.bookmarks.removeTree(it.id, function () { });
-								}
-							});
-						})(t[0].children[0].children);
-					});
-				}
-			} else {
-				if (re.info) {
-					alert(re.info);
-				}
-			}
-		}, "json");
-	}
-	chrome.tabs.onCreated.addListener(function (info) {
-		if (!firstCheck) {
-			firstCheck = true;
-			updateBookMarks();
-		}
-	});
-	chrome.windows.onCreated.addListener(function (id) {
-		if (!firstCheck) {
-			firstCheck = true;
-			updateBookMarks();
-		}
-	});
-
-	if(DataKeeper.getData("do")==="true"){
+	if (DataKeeper.getData("do") === "true") {
 		$("#loading").show();
 	}
 	if (DataKeeper.getData("process") !== "1" && DataKeeper.getData("process") !== "2") {

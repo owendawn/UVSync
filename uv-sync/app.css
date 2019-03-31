@@ -1,5 +1,25 @@
 /* Write your styles */
+ /*滚动条整体样式*/
+::-webkit-scrollbar {
+    width: 10px;
+    height: 1px;
+}
+/*滚动条滑块*/
+::-webkit-scrollbar-thumb {
+    border-radius: 10px;
+    -webkit-box-shadow: inset 0 0 5px rgba(0,0,0,0.2);
+    background: rgba(83, 83, 83, 0.3);
+}
+/*滚动条轨道*/
+::-webkit-scrollbar-track {
+    -webkit-box-shadow: inset 0 0 1px rgba(0,0,0,0);
+    border-radius: 10px;
+    background: rgba(204, 204, 204, 0.2);
+}
+
+
 html,body { background: rgb(42,144,223);padding:0;margin:0!important;}
+body{min-height: 350px;width:300px;background: url(bg.jpg) rgb(42,144,223) top no-repeat;background-size: 100%; }
 /* 动画 */
 .spinner {  position: absolute;top: 10px;left: 15px; width: 30px; height: 30px; text-align: center;   -webkit-animation: rotate 2.0s infinite linear; animation: rotate 2.0s infinite linear;}
 .dot1, .dot2 {  width: 60%; height: 60%; display: inline-block; position: absolute; top: 0; background-color: #ffffff; border-radius: 100%;-webkit-animation: bounce 2.0s infinite ease-in-out;animation: bounce 2.0s infinite ease-in-out; }
@@ -21,7 +41,7 @@ html,body { background: rgb(42,144,223);padding:0;margin:0!important;}
     }
 }
 /* 登陆logo */
-.myapp-login { background: url(bg.jpg) rgb(42,144,223) top no-repeat; background-size: 100%; height: 100%;}
+.myapp-login { height: 100%;}
 .myapp-login .myapp-login-bg { padding-top: 30px;  height: 100%;}
 .myapp-login .myapp-login-logo { width: 100%; text-align: center;}
 .myapp-login .myapp-login-logo i { font-size:90px; color: #fff;}
@@ -30,13 +50,18 @@ html,body { background: rgb(42,144,223);padding:0;margin:0!important;}
 .myapp-login .myapp-login-form  .am-form button { background: #fff; width: 100%; border-radius: 30px; color: #2a90df; border: none; font-size: 14px; margin-top: 20px;}
 .myapp-login .myapp-login-form  .am-form .login-text {font-size: 14px; width: 100%; color: #fff; padding-top: 20px; text-align: center;}
 
-body{width:300px;}
-
 .text-white{color:white;}
-
+.pull-right{float:right;}
 a{cursor: pointer;}
+a:hover{color:orange}
 
 #logo{background-image: url(logo.PNG); background-size: 100% 100%;  width: 100px; height: 100px;opacity: 0.3;font-size: 0;}
 
 
 #registermode,#firstmode,#alreadyloadmode{display:none;}
+
+#historymode{width: 100%;height: 250px;position: absolute;top: 0;left:0;    padding: 0 23px;    }
+#history{overflow-y: auto;height:235px;}
+#history>div{border-bottom: 1px solid white;margin-bottom: 5px;}
+#history>div>a{    font-size: 25pt;line-height: 21px;margin-right: 12px;}
+#toCloseHistory{font-size: 21pt;margin-top: -20px;font-weight: bold;}

@@ -19,14 +19,18 @@
   <div id="tmp" style="display:none;"></div>
   <div class="am-g myapp-login">
     <div class="myapp-login-bg">
+      <!-- 加载动画 -->
       <div class="spinner" id="loading" style="display:none;">
         <div class="dot1"></div>
         <div class="dot2"></div>
       </div>
+      <!-- logo -->
       <div class="myapp-login-logo">
         <i class="am-icon-stumbleupon" id="logo"></i>
       </div>
+      <!-- content -->
       <div class="am-u-sm-10 myapp-login-form">
+        <!-- register and login -->
         <form class="am-form" id="theform" action="javascript:void(0)">
           <fieldset style="margin-bottom:0;padding-top: 0;padding-bottom: 0;">
             <div id="commonmode">
@@ -50,9 +54,9 @@
                 <a class="text-white" id="toregister">No account?</a>
               </div>
             </div>
-
           </fieldset>
         </form>
+        <!-- firstload and merge or synchronized -->
         <div class="am-form">
           <fieldset>
             <div id="firstmode">
@@ -66,8 +70,18 @@
               <p><button class="am-btn am-btn-default" id="dosynchronize" style="margin-top:10px;">synchronize</button>
               </p>
               <a class="text-white" id="dologout">logout?</a>
+              <a class="text-white pull-right" id="toHistory">history!</a>
             </div>
           </fieldset>
+        </div>
+        <!-- history -->
+        <div id="historymode" style="display:none;">
+          <div>
+            &nbsp;<a class="text-white pull-right" id="toCloseHistory">×</a>
+          </div>
+          <div id="history">
+
+          </div>
         </div>
       </div>
     </div>

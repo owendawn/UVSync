@@ -14,8 +14,8 @@ class BookMarkController
 {
     public function getBookMarkList()
     {
-        $hash = isset($_POST["hash"]) ? $_POST["hash"] : null;
-        $token = $_POST["token"];
+        $hash = isset($_REQUEST["hash"]) ? $_REQUEST["hash"] : null;
+        $token = $_REQUEST["token"];
         $jwtUtil = new JwtUtil();
         $jwt = $jwtUtil->parseJwt($token);
 
@@ -90,6 +90,36 @@ class BookMarkController
             }
 
             return array("code" => 500);
+        } catch (\Exception $e) {
+            return array("code" => 500, "info" => $e->getMessage());
+        }
+    }
+
+    public function getBookMarkHistory()
+    {
+        $token = $_REQUEST["token"];
+        $jwtUtil = new JwtUtil();
+        $jwt = $jwtUtil->parseJwt($token);
+
+        $userId = $jwt->id;
+        try {
+            $sqliteUtil = new SqliteUtil();
+            $db = $sqliteUtil->getDB();
+            $id = UUIDUtil::uuid();
+            $ps = $db->prepare("select * from bookmarklog where userid=:userId order by create_at desc limit 10 offset 0");
+            $ps->bindParam(":userId", $userId);
+
+            $rs = $ps->execute();
+            $row = array();
+            $i = 0;
+            $serverHash=null;
+            while ($res = $rs->fetchArray(SQLITE3_ASSOC)) {
+                $row[$i] = $res;
+                $serverHash=$res["hash"];
+                $i++;
+            }
+           
+            return array("data" =>  $row ,"serverHash"=>$serverHash, "code" => 200);
         } catch (\Exception $e) {
             return array("code" => 500, "info" => $e->getMessage());
         }
