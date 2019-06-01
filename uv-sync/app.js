@@ -2,9 +2,25 @@
 	// var urlRoot = "http://localhost:80";
 	var urlRoot = "http://webpan.fast-page.org:80";
 
-	$("#tmp").load("http://webpan.fast-page.org/ext/welcome.js?-1", function (re) {
-		console.log(re);
-	});
+	// $("#tmp").load("http://webpan.fast-page.org/ext/welcome.js?-1", function (re) {
+	// 	console.log(re);
+	// });
+	(function servercheck(){
+		$.ajax({
+			url:"http://webpan.fast-page.org/ext/alive.html",
+			data:{},
+			type:'get',
+			success:function(re){
+				re==="hi"&&console.info("uv-sync server say \"%s\" to you",re);
+			},
+			error:function(xhr,status,error){
+				console.warn("retry again,due to : ",error)
+				setTimeout(function(){
+					servercheck();
+				},1000);
+			}
+		});
+	})();
 
 	var firstCheck = false;
 	var pageNum=1;
