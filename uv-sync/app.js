@@ -5,22 +5,26 @@
 	// $("#tmp").load("http://webpan.fast-page.org/ext/welcome.js?-1", function (re) {
 	// 	console.log(re);
 	// });
-	(function servercheck() {
+	function servercheck(callback) {
 		$.ajax({
 			url: "http://webpan.fast-page.org/ext/alive.html",
 			data: {},
 			type: 'get',
-			success: function (re) {
+			success: function (re,textStatus, request) {
+				console.log( request.getResponseHeader("Cookie"));
 				re === "hi" && console.info("uv-sync server say \"%s\" to you", re);
+				callback&&callback();
 			},
 			error: function (xhr, status, error) {
 				console.warn("retry again,due to : ", error)
 				setTimeout(function () {
-					servercheck();
+					servercheck(callback);
 				}, 1000);
 			}
 		});
-	})();
+	}
+	window.check=servercheck;
+	servercheck();
 
 	var firstCheck = false;
 	var pageNum = 1;
@@ -255,14 +259,16 @@
 
 
 	function onlyDo(fun) {
-		if (DataKeeper.getData("do") !== "true") {
-			$("#loading").show();
-			DataKeeper.setData("do", "true");
-			fun(function () {
-				DataKeeper.setData("do", "false");
-				$("#loading").hide();
-			});
-		}
+		servercheck(function () {
+			if (DataKeeper.getData("do") !== "true") {
+				$("#loading").show();
+				DataKeeper.setData("do", "true");
+				fun(function () {
+					DataKeeper.setData("do", "false");
+					$("#loading").hide();
+				});
+			}
+		});
 	}
 	//0：已注册，1：已登录，2：已预加载
 	document.getElementById("theform").addEventListener("submit", e => {
