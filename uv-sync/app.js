@@ -1,4 +1,46 @@
 (function (window) {
+	var DataKeeper = {
+		setData: function (k, v) {
+			window.localStorage.setItem(k, v);
+		},
+		getData: function (k) {
+			return window.localStorage.getItem(k);
+		},
+		removeData: function (k) {
+			window.localStorage.removeItem(k);
+		}
+	};
+	var DataNotify = {
+		alert: function (data) {
+			chrome.tabs.query({
+				active: true,
+				currentWindow: true
+			}, function (tabs) {
+				chrome.tabs.sendRequest(tabs[0].id, {
+					type: "alert",
+					data: data
+				}, function (response) {
+					console.log(response);
+				});
+			});
+		},
+		console: function (data) {
+			chrome.tabs.query({
+				active: true,
+				currentWindow: true
+			}, function (tabs) {
+				chrome.tabs.sendRequest(tabs[0].id, {
+					type: "console",
+					data: data
+				}, function (response) {
+					console.log(response);
+				});
+			});
+		}
+	}
+
+
+	
 	// var urlRoot = "http://localhost:80";
 	var urlRoot = "http://webpan.fast-page.org:80";
 	DataKeeper.setData("do", "false");
@@ -211,45 +253,7 @@
 
 
 
-	var DataKeeper = {
-		setData: function (k, v) {
-			window.localStorage.setItem(k, v);
-		},
-		getData: function (k) {
-			return window.localStorage.getItem(k);
-		},
-		removeData: function (k) {
-			window.localStorage.removeItem(k);
-		}
-	};
-	var DataNotify = {
-		alert: function (data) {
-			chrome.tabs.query({
-				active: true,
-				currentWindow: true
-			}, function (tabs) {
-				chrome.tabs.sendRequest(tabs[0].id, {
-					type: "alert",
-					data: data
-				}, function (response) {
-					console.log(response);
-				});
-			});
-		},
-		console: function (data) {
-			chrome.tabs.query({
-				active: true,
-				currentWindow: true
-			}, function (tabs) {
-				chrome.tabs.sendRequest(tabs[0].id, {
-					type: "console",
-					data: data
-				}, function (response) {
-					console.log(response);
-				});
-			});
-		}
-	}
+	
 	//0：已注册，1：已登录，2：已预加载
 	document.getElementById("theform").addEventListener("submit", e => {
 		e.preventDefault();
