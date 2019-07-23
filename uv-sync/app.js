@@ -1,19 +1,24 @@
-(function () {
+(function (window) {
 	// var urlRoot = "http://localhost:80";
 	var urlRoot = "http://webpan.fast-page.org:80";
+	DataKeeper.setData("do", "false");
 
-	// $("#tmp").load("http://webpan.fast-page.org/ext/welcome.js?-1", function (re) {
-	// 	console.log(re);
-	// });
 	function servercheck(callback) {
 		$.ajax({
 			url: "http://webpan.fast-page.org/ext/alive.html",
 			data: {},
 			type: 'get',
-			success: function (re,textStatus, request) {
-				console.log( request.getResponseHeader("Cookie"));
+			success: function (re, textStatus, request) {
+				console.log(request);
 				re === "hi" && console.info("uv-sync server say \"%s\" to you", re);
-				callback&&callback();
+				if (DataKeeper.getData("do") !== "true") {
+					$("#loading").show();
+					DataKeeper.setData("do", "true");
+					callback && callback(function(){
+						DataKeeper.setData("do", "false");
+						$("#loading").hide();
+					});
+				}
 			},
 			error: function (xhr, status, error) {
 				console.warn("retry again,due to : ", error)
@@ -23,11 +28,11 @@
 			}
 		});
 	}
-	window.check=servercheck;
-	servercheck();
+	window.check = servercheck;
+	servercheck(function(end){
+		end();
+	});
 
-	var firstCheck = false;
-	var pageNum = 1;
 
 	function hasBookMark(it, p, fun) {
 		chrome.bookmarks.search(it.title, function (re) {
@@ -37,23 +42,20 @@
 			re.forEach(function (o, idx, all) {
 				if (o.url === it.url) {
 					if (o.parentId === p) {
+						pid = o.parentId;
+						oid = o.id;
 						if (o.index === it.index) {
-							pid = o.id;
 							flag = 0;
 							return;
 						} else {
-							pid = o.parentId;
-							oid = o.id;
 							flag = 1;
-							return;
 						}
 					}
 				}
 			});
-			fun(flag, pid);
+			fun(flag, pid,oid);
 		})
 	}
-
 	function renderTree(arr, pid) {
 		arr.forEach(function (it, idx) {
 			hasBookMark(it, pid, function (flag, p, oid) {
@@ -69,28 +71,26 @@
 						}
 					});
 				} else if (flag === 1) {
-					// chrome.bookmarks.create({
-					//   'parentId': p,
-					//   'title': it.title,
-					//   'url': it.url,
-					//   'index': it.index
-					// }, function (o) {
-
-					// }); 
-					if (it.children) {
-						renderTree(it.children, oid);
-					}
+					chrome.bookmarks.create({
+					  'parentId': p,
+					  'title': it.title,
+					  'url': it.url,
+					  'index': it.index
+					}, function (o) {
+						if (it.children) {
+							renderTree(it.children, o.id);
+						}
+					}); 
 				} else if (flag === 0) {
 					if (it.children) {
-						renderTree(it.children, p);
+						renderTree(it.children, oid);
 					}
 				}
 			});
 
 		});
 	}
-
-	function realUpdateBookMarks(data) {
+	function cloneBookMarks(data) {
 		var tree = JSON.parse(data.bookmarks);
 		DataKeeper.setData("last", data.hash);
 		document.getElementById("lasttime").value = DataKeeper.getData("last");
@@ -117,11 +117,12 @@
 				});
 			})(t[0].children[0].children);
 		});
-
 	}
 
-	function updateBookMarks() {
-		onlyDo(function (callBack) {
+	var pageNum = 1;
+
+	var initBookMarks=function () {
+		servercheck(function (callBack) {
 			$.post(urlRoot + "/UVSync/backend/api.php?m=BookMarkController!getBookMarkList", {
 				token: DataKeeper.getData("token"),
 				hash: DataKeeper.getData("last")
@@ -129,8 +130,7 @@
 				callBack();
 				if (re.code === 200 && re.needUpdate) {
 					if (re.data && re.data[0]) {
-						realUpdateBookMarks(re.data[0]);
-
+						cloneBookMarks(re.data[0]);
 					}
 				} else {
 					if (re.info) {
@@ -139,22 +139,19 @@
 				}
 			}, "json");
 		});
+	};
+	chrome.tabs.onCreated.addListener(initBookMarks);
+	chrome.windows.onCreated.addListener(initBookMarks);
+	var changeBookMarks = function (id, data) {
+		DataKeeper.setData("last", PanUtil.dateFormat.format(new Date(), 'yyyy-MM-dd HH:mm:ss'));
+		$("#dosynchronize").trigger("click");
 	}
-
-
-	chrome.tabs.onCreated.addListener(function (info) {
-		if (!firstCheck) {
-			firstCheck = true;
-			updateBookMarks();
-		}
-	});
-	chrome.windows.onCreated.addListener(function (id) {
-		if (!firstCheck) {
-			firstCheck = true;
-			updateBookMarks();
-		}
-	});
-
+	chrome.bookmarks.onCreated.addListener(changeBookMarks);
+	chrome.bookmarks.onChanged.addListener(changeBookMarks);
+	chrome.bookmarks.onRemoved.addListener(changeBookMarks);
+	chrome.bookmarks.onChildrenReordered.addListener(changeBookMarks);
+	chrome.bookmarks.onImportEnded.addListener(changeBookMarks);
+	chrome.bookmarks.onMoved.addListener(changeBookMarks);
 
 
 	function toggleMode(type) {
@@ -225,7 +222,6 @@
 			window.localStorage.removeItem(k);
 		}
 	};
-
 	var DataNotify = {
 		alert: function (data) {
 			chrome.tabs.query({
@@ -254,22 +250,6 @@
 			});
 		}
 	}
-
-
-
-
-	function onlyDo(fun) {
-		servercheck(function () {
-			if (DataKeeper.getData("do") !== "true") {
-				$("#loading").show();
-				DataKeeper.setData("do", "true");
-				fun(function () {
-					DataKeeper.setData("do", "false");
-					$("#loading").hide();
-				});
-			}
-		});
-	}
 	//0：已注册，1：已登录，2：已预加载
 	document.getElementById("theform").addEventListener("submit", e => {
 		e.preventDefault();
@@ -288,7 +268,7 @@
 		$("#loading").hide();
 	});
 	document.getElementById("doregister").addEventListener("click", function () {
-		onlyDo(function (callBack) {
+		servercheck(function (callBack) {
 			$.get(urlRoot + "/UVSync/backend/api.php?m=UserController!register", $("#theform").serialize() + "&mail=", function (re) {
 				callBack();
 				if (re.register) {
@@ -303,7 +283,7 @@
 		});
 	});
 	document.getElementById("dologin").addEventListener("click", function () {
-		onlyDo(function (callBack) {
+		servercheck(function (callBack) {
 			$.get(urlRoot + "/UVSync/backend/api.php?m=UserController!login", $("#theform").serialize() + "&mail=", function (re) {
 				callBack();
 				if (re.login) {
@@ -319,7 +299,7 @@
 		});
 	});
 	document.getElementById("dofirstload").addEventListener("click", function () {
-		onlyDo(function (callBack) {
+		servercheck(function (callBack) {
 			$.post(urlRoot + "/UVSync/backend/api.php?m=BookMarkController!getBookMarkList", {
 				token: DataKeeper.getData("token")
 			}, function (re) {
@@ -343,7 +323,7 @@
 		});
 	});
 	document.getElementById("domerge").addEventListener("click", function () {
-		onlyDo(function (callBack) {
+		servercheck(function (callBack) {
 			$.post(urlRoot + "/UVSync/backend/api.php?m=BookMarkController!getBookMarkList", {
 				token: DataKeeper.getData("token"),
 				hash: DataKeeper.getData("last")
@@ -365,7 +345,7 @@
 		});
 	});
 	document.getElementById("dosynchronize").addEventListener("click", function () {
-		onlyDo(function (callBack) {
+		servercheck(function (callBack) {
 			chrome.bookmarks.getTree(function (tree) {
 				$.post(urlRoot + "/UVSync/backend/api.php?m=BookMarkController!getBookMarkList", {
 					token: DataKeeper.getData("token"),
@@ -395,12 +375,12 @@
 		});
 	});
 	document.getElementById("toHistory").addEventListener("click", function () {
-		onlyDo(function (callBack) {
+		servercheck(function (callBack) {
 			showHistory(pageNum, callBack);
 		});
 	});
 	document.getElementById("toPrev").addEventListener("click", function () {
-		onlyDo(function (callBack) {
+		servercheck(function (callBack) {
 			pageNum--;
 			if (pageNum <= 1) {
 				pageNum = 1;
@@ -409,13 +389,11 @@
 		});
 	});
 	document.getElementById("toNext").addEventListener("click", function () {
-		onlyDo(function (callBack) {
+		servercheck(function (callBack) {
 			pageNum++;
 			showHistory(pageNum, callBack);
 		});
 	});
-
-
 	document.getElementById("dologout").addEventListener("click", function () {
 		DataKeeper.removeData("token");
 		DataKeeper.removeData("process");
@@ -433,46 +411,30 @@
 				return '<div class="text-white">' + it.hash +
 					'<a class="pull-right text-white bookmark-back" data-id="' + it.id + '" data-hash="' + it.hash + '" data-props="' + encodeURIComponent(it.bookmarks) + '">☚</a></div>';
 			}).join(""));
-			activeBookmarkRollback();
+			(function activeBookmarkRollback() {
+				var items = document.getElementsByClassName("bookmark-back");
+				for (var i = 0; i < items.length; i++) {
+					items[i].addEventListener("click", function () {
+						if (confirm("确定回滚至" + this.getAttribute("data-hash") + "吗？")) {
+							var props = decodeURIComponent(this.getAttribute("data-props"));
+							cloneBookMarks({
+								bookmarks: props,
+								hash: this.getAttribute("data-hash"),
+								id: this.getAttribute("data-id")
+							});
+							DataKeeper.setData("last", PanUtil.dateFormat.format(new Date(), 'yyyy-MM-dd HH:mm:ss'));
+							$("#dosynchronize").trigger("click");
+							toggleMode(3);
+						}
+					});
+				}
+			})();
 			toggleMode(4)
 			$("#pageNum").html("- " + pageNum + " -");
 		}, "json");
 	}
 
-
-	function activeBookmarkRollback() {
-		var items = document.getElementsByClassName("bookmark-back");
-		for (var i = 0; i < items.length; i++) {
-			items[i].addEventListener("click", function () {
-				if (confirm("确定回滚至" + this.getAttribute("data-hash") + "吗？")) {
-					var props = decodeURIComponent(this.getAttribute("data-props"));
-					realUpdateBookMarks({
-						bookmarks: props,
-						hash: this.getAttribute("data-hash"),
-						id: this.getAttribute("data-id")
-					});
-					DataKeeper.setData("last", PanUtil.dateFormat.format(new Date(), 'yyyy-MM-dd HH:mm:ss'));
-					$("#dosynchronize").trigger("click");
-					toggleMode(3);
-				}
-			});
-		}
-	}
-
-
-	var changeBookMarks = function (id, data) {
-		if (firstCheck) {
-			DataKeeper.setData("last", PanUtil.dateFormat.format(new Date(), 'yyyy-MM-dd HH:mm:ss'));
-			$("#dosynchronize").trigger("click");
-		}
-	}
-	chrome.bookmarks.onCreated.addListener(changeBookMarks);
-	chrome.bookmarks.onChanged.addListener(changeBookMarks);
-	chrome.bookmarks.onRemoved.addListener(changeBookMarks);
-	chrome.bookmarks.onChildrenReordered.addListener(changeBookMarks);
-	chrome.bookmarks.onImportEnded.addListener(changeBookMarks);
-	chrome.bookmarks.onMoved.addListener(changeBookMarks);
-
+	
 
 
 	if (DataKeeper.getData("do") === "true") {
@@ -486,4 +448,5 @@
 		toggleMode(3);
 		document.getElementById("lasttime").value = DataKeeper.getData("last");
 	}
-})();
+	
+})(window);

@@ -19,7 +19,7 @@
 
 
 html,body { background: rgb(42,144,223);padding:0;margin:0!important;}
-body{min-height: 350px;width:300px;background: url(bg.jpg) rgb(42,144,223) top no-repeat;background-size: 100%; }
+body{min-height: 350px;width:300px;background: url(asserts/bg.jpg) rgb(42,144,223) top no-repeat;background-size: 100%; }
 /* 动画 */
 .spinner {  position: absolute;top: 10px;left: 15px; width: 30px; height: 30px; text-align: center;   -webkit-animation: rotate 2.0s infinite linear; animation: rotate 2.0s infinite linear;}
 .dot1, .dot2 {  width: 60%; height: 60%; display: inline-block; position: absolute; top: 0; background-color: #ffffff; border-radius: 100%;-webkit-animation: bounce 2.0s infinite ease-in-out;animation: bounce 2.0s infinite ease-in-out; }
@@ -55,7 +55,7 @@ body{min-height: 350px;width:300px;background: url(bg.jpg) rgb(42,144,223) top n
 a{cursor: pointer;}
 a:hover{color:orange}
 
-#logo{background-image: url(logo.PNG); background-size: 100% 100%;  width: 100px; height: 100px;opacity: 0.3;font-size: 0;}
+#logo{background-image: url(asserts/logo.PNG); background-size: 100% 100%;  width: 100px; height: 100px;opacity: 0.3;font-size: 0;}
 
 
 #registermode,#firstmode,#alreadyloadmode{display:none;}

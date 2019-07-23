@@ -7,10 +7,10 @@
 
   "icons": 
   {            
-    "128": "index4.png" 
+    "128": "asserts/index4.png" 
   },  
   "browser_action": {
-    "default_icon": "index4.png",
+    "default_icon": "asserts/index4.png",
     "default_popup": "popup.html"
   },
   "background": {
