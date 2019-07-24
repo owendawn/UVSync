@@ -18,6 +18,7 @@
         $controller=new $apiarr[0]();
         $method=$apiarr[1];
         $re=$controller->$method();
+        header('Content-type:application/json;charset=utf-8');  
         print(json_encode($re));
 
       }else{

@@ -162,6 +162,7 @@
 	}
 
 	var pageNum = 1;
+	var timeout=null;
 
 	var initBookMarks=function () {
 		servercheck(function (callBack) {
@@ -182,11 +183,19 @@
 			}, "json");
 		});
 	};
-	chrome.tabs.onCreated.addListener(initBookMarks);
+	setInterval(initBookMarks,10*60*1000);
 	chrome.windows.onCreated.addListener(initBookMarks);
+	// chrome.tabs.onCreated.addListener(initBookMarks);
 	var changeBookMarks = function (id, data) {
-		DataKeeper.setData("last", PanUtil.dateFormat.format(new Date(), 'yyyy-MM-dd HH:mm:ss'));
-		$("#dosynchronize").trigger("click");
+		if(timeout!==null){
+			clearTimeout(timeout);
+			timeout=null;
+		}
+		timeout=setTimeout(function(){
+			DataKeeper.setData("last", PanUtil.dateFormat.format(new Date(), 'yyyy-MM-dd HH:mm:ss'));
+			$("#dosynchronize").trigger("click");
+			timeout=null;
+		},60*1000);
 	}
 	chrome.bookmarks.onCreated.addListener(changeBookMarks);
 	chrome.bookmarks.onChanged.addListener(changeBookMarks);
@@ -412,7 +421,7 @@
 		}, function (re) {
 			callBack();
 			$("#history").html(re.data.map(function (it, idx, all) {
-				return '<div class="text-white">' + it.hash +
+				return '<div class="text-white" title="'+it.bookmarks.length+'">' + it.hash +
 					'<a class="pull-right text-white bookmark-back" data-id="' + it.id + '" data-hash="' + it.hash + '" data-props="' + encodeURIComponent(it.bookmarks) + '">☚</a></div>';
 			}).join(""));
 			(function activeBookmarkRollback() {
