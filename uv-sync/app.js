@@ -81,22 +81,23 @@
 			var flag = -1;
 			var pid;
 			var oid;
-			re.forEach(function (o, idx, all) {
+			for (var i=0;i<re.length;i++) {
+				var o=re[i];
 				if (o.url === it.url) {
 					if (o.parentId === p) {
 						pid = o.parentId;
 						oid = o.id;
 						if (o.index === it.index) {
 							flag = 0;
-							return;
+							break;
 						} else {
 							flag = 1;
 						}
 					}
 				}
-			});
+			}
 			fun(flag, pid,oid);
-		})
+		});
 	}
 	function renderTree(arr, pid) {
 		arr.forEach(function (it, idx) {
@@ -113,16 +114,9 @@
 						}
 					});
 				} else if (flag === 1) {
-					chrome.bookmarks.create({
-					  'parentId': p,
-					  'title': it.title,
-					  'url': it.url,
-					  'index': it.index
-					}, function (o) {
-						if (it.children) {
-							renderTree(it.children, o.id);
-						}
-					}); 
+					if (it.children) {
+						renderTree(it.children, o.id);
+					}
 				} else if (flag === 0) {
 					if (it.children) {
 						renderTree(it.children, oid);
