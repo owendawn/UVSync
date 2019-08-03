@@ -12,6 +12,26 @@ require_once __DIR__ . "/../utils/JwtUtil.php";
 
 class BookMarkController
 {
+    public function getDateTime()
+    {
+        try {
+            $sqliteUtil = new SqliteUtil();
+            $db = $sqliteUtil->getDB();
+            $ps = $db->prepare("SELECT datetime('now') as dt");
+            $rs = $ps->execute();
+            $row = array();
+            $i = 0;
+            if ($res = $rs->fetchArray(SQLITE3_ASSOC)) {
+                $row = $res;
+                $i++;
+            }
+
+            return array("data" => $row ,  "code" => 200);
+        } catch (\Exception $e) {
+            return array("code" => 500, "info" => $e->getMessage());
+        }
+    }
+
     public function getBookMarkList()
     {
         $hash = isset($_REQUEST["hash"]) ? $_REQUEST["hash"] : null;
