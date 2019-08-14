@@ -17,7 +17,7 @@ class BookMarkController
         try {
             $sqliteUtil = new SqliteUtil();
             $db = $sqliteUtil->getDB();
-            $ps = $db->prepare("SELECT datetime('now') as dt");
+            $ps = $db->prepare("SELECT datetime('now','+8 hour') as dt,datetime(CURRENT_TIMESTAMP,'localtime') as localtime");
             $rs = $ps->execute();
             $row = array();
             $i = 0;
@@ -96,7 +96,7 @@ class BookMarkController
                 if($count>0){
                     return array("code" => 200,"info"=>"the hash is exists");
                 }else{
-                    $ps = $db->prepare("select a.* from bookmarklog a, (select max(create_at) as last,userid  from bookmarklog  where userid=:userId )b where a.userid=b.userid and a.create_at=b.last and (julianday(datetime('now'))-julianday(a.create_at))*24*60<1");
+                    $ps = $db->prepare("select a.* from bookmarklog a, (select max(create_at) as last,userid  from bookmarklog  where userid=:userId )b where a.userid=b.userid and a.create_at=b.last and (julianday(datetime('now','+8 hour'))-julianday(a.hash))*24*60<1");
                     $ps->bindParam(":userId", $userId);
                     $rs = $ps->execute();
                     if ($res = $rs->fetchArray(SQLITE3_ASSOC)) {
