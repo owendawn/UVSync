@@ -96,15 +96,30 @@ class BookMarkController
                 if($count>0){
                     return array("code" => 200,"info"=>"the hash is exists");
                 }else{
-                    $id = UUIDUtil::uuid();
-                    $ps = $db->prepare("insert into bookmarklog(id,userid,bookmarks,hash)values(:id,:userId,:bookmarks,:hash)");
-                    $ps->bindParam(":id", $id);
+                    $ps = $db->prepare("select a.* from bookmarklog a, (select max(create_at) as last,userid  from bookmarklog  where userid=:userId )b where a.userid=b.userid and a.create_at=b.last and (julianday(datetime('now'))-julianday(a.create_at))*24*60<1");
                     $ps->bindParam(":userId", $userId);
-                    $ps->bindParam(":bookmarks", $bookmarks);
-                    $ps->bindParam(":hash", $hash);
                     $rs = $ps->execute();
-                    if ($rs) {
-                        return array("code" => 200);
+                    if ($res = $rs->fetchArray(SQLITE3_ASSOC)) {
+                        $id=$res["id"];
+                        $ps = $db->prepare("update bookmarklog set bookmarks=:bookmarks, hash=:hash where id=:id");
+                        $ps->bindParam(":id", $id);
+                        $ps->bindParam(":bookmarks", $bookmarks);
+                        $ps->bindParam(":hash", $hash);
+                        $rs = $ps->execute();
+                        if ($rs) {
+                            return array("code" => 200,"desc"=>"update");
+                        }
+                    }else{
+                        $id = UUIDUtil::uuid();
+                        $ps = $db->prepare("insert into bookmarklog(id,userid,bookmarks,hash)values(:id,:userId,:bookmarks,:hash)");
+                        $ps->bindParam(":id", $id);
+                        $ps->bindParam(":userId", $userId);
+                        $ps->bindParam(":bookmarks", $bookmarks);
+                        $ps->bindParam(":hash", $hash);
+                        $rs = $ps->execute();
+                        if ($rs) {
+                            return array("code" => 200,"desc"=>"add");
+                        }
                     }
                 }
             }

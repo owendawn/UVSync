@@ -41,8 +41,8 @@
 
 
 	
-	// var urlRoot = "http://localhost:80";
-	var urlRoot = "http://webpan.fast-page.org:80";
+	var urlRoot = "http://localhost:80";
+	// var urlRoot = "http://webpan.fast-page.org:80";
 	DataKeeper.setData("do", "false");
 
 	function servercheck(callback) {
@@ -189,7 +189,7 @@
 			DataKeeper.setData("last", PanUtil.dateFormat.format(new Date(), 'yyyy-MM-dd HH:mm:ss'));
 			$("#dosynchronize").trigger("click");
 			timeout=null;
-		},60*1000);
+		},0);
 	}
 	chrome.bookmarks.onCreated.addListener(changeBookMarks);
 	chrome.bookmarks.onChanged.addListener(changeBookMarks);
@@ -367,9 +367,14 @@
 								bookmarks: JSON.stringify(tree)
 							},
 							function (re) {
+								console.info(hash,re)
 								if (re.code === 200 && re.needUpdate) {
 									DataKeeper.setData("last", hash);
 									document.getElementById("lasttime").value = DataKeeper.getData("last");
+									if(timeout!==null){
+										clearTimeout(timeout);
+										timeout=null;
+									}
 								} else if (re.code === 500) {
 									if (re.info) {
 										alert(re.info);
