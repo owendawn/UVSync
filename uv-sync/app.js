@@ -41,8 +41,8 @@
 
 
 	
-	var urlRoot = "http://localhost:80";
-	// var urlRoot = "http://webpan.fast-page.org:80";
+	// var urlRoot = "http://localhost:80";
+	var urlRoot = "http://webpan.fast-page.org:80";
 	DataKeeper.setData("do", "false");
 
 	function servercheck(callback) {
