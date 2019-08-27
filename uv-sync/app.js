@@ -83,7 +83,7 @@
 			var oid;
 			for (var i=0;i<re.length;i++) {
 				var o=re[i];
-				if (o.url === it.url) {
+				if (o.url === it.url&&o.title===it.title) {
 					if (o.parentId === p) {
 						pid = o.parentId;
 						oid = o.id;
@@ -114,9 +114,14 @@
 						}
 					});
 				} else if (flag === 1) {
-					if (it.children) {
-						renderTree(it.children, o.id);
-					}
+					chrome.bookmarks.move(oid,{
+						parentId:it.parentId,
+						index:it.index
+					}, function(o){
+						if (it.children) {
+							renderTree(it.children, o.id);
+						}
+					});
 				} else if (flag === 0) {
 					if (it.children) {
 						renderTree(it.children, oid);
