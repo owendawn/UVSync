@@ -426,7 +426,7 @@
 			callBack();
 			$("#history").html(re.data.map(function (it, idx, all) {
 				return '<div class="text-white" title="'+it.bookmarks.length+'">' + it.hash +
-					'<a class="pull-right text-white bookmark-back" data-id="' + it.id + '" data-hash="' + it.hash + '" data-props="' + encodeURIComponent(it.bookmarks) + '">☚</a></div>';
+					'<a class="pull-right text-white bookmark-back" data-id="' + it.id + '" data-hash="' + it.hash + '" data-props="' + encodeURIComponent(it.bookmarks) + '">≈</a></div>';
 			}).join(""));
 			(function activeBookmarkRollback() {
 				var items = document.getElementsByClassName("bookmark-back");
