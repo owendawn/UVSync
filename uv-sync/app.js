@@ -47,7 +47,7 @@
 
 	function servercheck(callback) {
 		$.ajax({
-			url: "http://webpan.fast-page.org/ext/alive.html",
+			url: urlRoot+"/UVSync/backend/alive.html",
 			data: {},
 			type: 'get',
 			success: function (re, textStatus, request) {
