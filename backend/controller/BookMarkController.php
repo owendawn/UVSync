@@ -60,7 +60,7 @@ class BookMarkController
 
             if ($hash != null) {
                 if (count($row) > 0) {
-                    $needUpdate = $res["hash"] != $hash;
+                    $needUpdate = $res["hash"] > $hash;
                 }else{
                     $needUpdate=true;
                 }
