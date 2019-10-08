@@ -39,7 +39,9 @@
 		}
 	}
 
-
+	$.ajaxSetup({
+		header:{'Set-Cookie':'widget_session=abc123; SameSite=None; Secure'}
+   });
 	
 	// var urlRoot = "http://localhost:80";
 	var urlRoot = "http://webpan.fast-page.org:80";
@@ -50,6 +52,7 @@
 			url: urlRoot+"/UVSync/backend/alive.html",
 			data: {},
 			type: 'get',
+			// headers:{'Set-Cookie':'widget_session=abc123; SameSite=None; Secure'},
 			success: function (re, textStatus, request) {
 				console.log(request);
 				re === "hi" && console.info("uv-sync server say \"%s\" to you", re);
@@ -66,7 +69,7 @@
 				console.warn("retry again,due to : ", error)
 				setTimeout(function () {
 					servercheck(callback);
-				}, 1000);
+				}, 3000);
 			}
 		});
 	}
@@ -154,6 +157,9 @@
 				ch.forEach(function (it) {
 					if (!colls[it.title]) {
 						chrome.bookmarks.removeTree(it.id, function () {});
+					}
+					if (it.children) {
+						intree(it.children);
 					}
 				});
 			})(t[0].children[0].children);
