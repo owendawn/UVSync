@@ -56,14 +56,14 @@
 			success: function (re, textStatus, request) {
 				console.log(request);
 				re === "hi" && console.info("uv-sync server say \"%s\" to you", re);
-				if (DataKeeper.getData("do") !== "true") {
+				// if (DataKeeper.getData("do") !== "true") {
 					$("#loading").show();
 					DataKeeper.setData("do", "true");
 					callback && callback(function(){
 						DataKeeper.setData("do", "false");
 						$("#loading").hide();
 					});
-				}
+				// }
 			},
 			error: function (xhr, status, error) {
 				console.warn("retry again,due to : ", error)
@@ -370,7 +370,7 @@
 					hash: DataKeeper.getData("last")
 				}, function (re) {
 					callBack();
-					if (re.code === 200 && re.needUpdate) {
+					if (re.code === 200 && re.needPush) {
 						var hash = DataKeeper.getData("last");
 						$.post(urlRoot + "/UVSync/backend/api.php?m=BookMarkController!addBookMarkLog", {
 								token: DataKeeper.getData("token"),
@@ -379,7 +379,7 @@
 							},
 							function (re) {
 								console.info(hash,re)
-								if (re.code === 200 && re.needUpdate) {
+								if (re.code === 200 && re.updated) {
 									DataKeeper.setData("last", hash);
 									document.getElementById("lasttime").value = DataKeeper.getData("last");
 									if(timeout!==null){

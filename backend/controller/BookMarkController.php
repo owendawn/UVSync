@@ -57,18 +57,28 @@ class BookMarkController
                 $i++;
             }
             $needUpdate = false;
+            $needPush=false;
 
             if ($hash != null) {
                 if (count($row) > 0) {
                     $needUpdate = $res["hash"] > $hash;
+                    $needPush = $res["hash"] < $hash;
                 }else{
-                    $needUpdate=true;
+                    $needUpdate=false;
+                    $needPush=true;
                 }
             } else {
-                $needUpdate = true;
+                $needUpdate = false;
+                $needPush=true;
             }
 
-            return array("data" => $needUpdate ? $row : null, "needUpdate" => $needUpdate,"serverHash"=>$serverHash, "code" => 200);
+            return array(
+                "data" => $needUpdate ? $row : null, 
+                "needUpdate" => $needUpdate,
+                "needPush" => $needPush,
+                "serverHash"=>$serverHash, 
+                "code" => 200
+            );
         } catch (\Exception $e) {
             return array("code" => 500, "info" => $e->getMessage());
         }
@@ -94,7 +104,7 @@ class BookMarkController
             if ($res = $rs->fetchArray(SQLITE3_ASSOC)) {
                 $count=intval($res["cnt"]);
                 if($count>0){
-                    return array("code" => 200,"info"=>"the hash is exists");
+                    return array("code" => 200,"info"=>"the hash is exists","updated"=>false);
                 }else{
                     $ps = $db->prepare("select a.* from bookmarklog a, (select max(create_at) as last,userid  from bookmarklog  where userid=:userId )b where a.userid=b.userid and a.create_at=b.last and (julianday(datetime('now','+8 hour'))-julianday(a.hash))*24*60<1");
                     $ps->bindParam(":userId", $userId);
@@ -107,7 +117,7 @@ class BookMarkController
                         $ps->bindParam(":hash", $hash);
                         $rs = $ps->execute();
                         if ($rs) {
-                            return array("code" => 200,"desc"=>"update");
+                            return array("code" => 200,"desc"=>"update","updated"=>true);
                         }
                     }else{
                         $id = UUIDUtil::uuid();
@@ -118,15 +128,15 @@ class BookMarkController
                         $ps->bindParam(":hash", $hash);
                         $rs = $ps->execute();
                         if ($rs) {
-                            return array("code" => 200,"desc"=>"add");
+                            return array("code" => 200,"desc"=>"add","updated"=>true);
                         }
                     }
                 }
             }
 
-            return array("code" => 500);
+            return array("code" => 500,"updated"=>false);
         } catch (\Exception $e) {
-            return array("code" => 500, "info" => $e->getMessage());
+            return array("code" => 500, "info" => $e->getMessage(),"updated"=>false);
         }
     }
 
