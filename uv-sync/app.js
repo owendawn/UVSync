@@ -117,14 +117,14 @@
 						}
 					});
 				} else if (flag === 1) {
-					chrome.bookmarks.move(oid,{
-						parentId:it.parentId,
-						index:it.index
-					}, function(o){
+					// chrome.bookmarks.move(oid,{
+					// 	parentId:it.parentId,
+					// 	index:it.index
+					// }, function(o){
 						if (it.children) {
 							renderTree(it.children, o.id);
 						}
-					});
+					// });
 				} else if (flag === 0) {
 					if (it.children) {
 						renderTree(it.children, oid);
