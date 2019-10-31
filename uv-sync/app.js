@@ -143,8 +143,8 @@
 		var colls = {};
 		(function collect(tt) {
 			tt.forEach(function (it) {
-				if (!colls[it.title]) {
-					colls[it.title] = it;
+				if (!colls[it.parentId+'|'+it.title]) {
+					colls[it.parentId+'|'+it.title] = it;
 				}
 				if (it.children) {
 					collect(it.children);
@@ -155,7 +155,7 @@
 		chrome.bookmarks.getTree(function (t) {
 			(function intree(ch) {
 				ch.forEach(function (it) {
-					if (!colls[it.title]) {
+					if (!colls[it.parentId+'|'+it.title] ) {
 						chrome.bookmarks.removeTree(it.id, function () {});
 					}
 					if (it.children) {
