@@ -117,14 +117,9 @@
 						}
 					});
 				} else if (flag === 1) {
-					// chrome.bookmarks.move(oid,{
-					// 	parentId:it.parentId,
-					// 	index:it.index
-					// }, function(o){
-						if (it.children) {
-							renderTree(it.children, o.id);
-						}
-					// });
+					if (it.children) {
+						renderTree(it.children, oid);
+					}
 				} else if (flag === 0) {
 					if (it.children) {
 						renderTree(it.children, oid);
@@ -138,31 +133,34 @@
 		var tree = JSON.parse(data.bookmarks);
 		DataKeeper.setData("last", data.hash);
 		document.getElementById("lasttime").value = DataKeeper.getData("last");
+		console.log(tree)
 		renderTree(tree[0].children[0].children, "1");
 
 		var colls = {};
-		(function collect(tt) {
-			tt.forEach(function (it) {
-				if (!colls[it.parentId+'|'+it.title]) {
-					colls[it.parentId+'|'+it.title] = it;
+		(function collect(tt,p) {
+			p++;
+			tt.forEach(function (it,idx) {
+				if (!colls[p+'|'+it.title]) {
+					colls[p+'|'+it.title] = it;
 				}
 				if (it.children) {
-					collect(it.children);
+					collect(it.children,p);
 				}
 			});
-		})(tree[0].children[0].children);
+		})(tree[0].children[0].children,0);
 
 		chrome.bookmarks.getTree(function (t) {
-			(function intree(ch) {
-				ch.forEach(function (it) {
-					if (!colls[it.parentId+'|'+it.title] ) {
+			(function intree(ch,p) {
+				p++;
+				ch.forEach(function (it,idx) {
+					if (!colls[p+'|'+it.title] ) {
 						chrome.bookmarks.removeTree(it.id, function () {});
 					}
 					if (it.children) {
-						intree(it.children);
+						intree(it.children,p);
 					}
 				});
-			})(t[0].children[0].children);
+			})(t[0].children[0].children,0);
 		});
 	}
 
@@ -188,7 +186,7 @@
 			}, "json");
 		});
 	};
-	setInterval(initBookMarks,10*60*1000);
+	setInterval(initBookMarks,5*60*1000);
 	chrome.windows.onCreated.addListener(initBookMarks);
 	// chrome.tabs.onCreated.addListener(initBookMarks);
 	var changeBookMarks = function (id, data) {
@@ -397,6 +395,7 @@
 			});
 		});
 	});
+	document.getElementById("doclone").addEventListener("click", initBookMarks);
 	document.getElementById("toHistory").addEventListener("click", function () {
 		servercheck(function (callBack) {
 			showHistory(pageNum, callBack);
