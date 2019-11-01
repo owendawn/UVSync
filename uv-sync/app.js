@@ -349,8 +349,10 @@
 					if (re.data && re.data[0]) {
 						var tree = JSON.parse(re.data[0].bookmarks);
 						renderTree(tree[0].children[0].children, "1");
-						DataKeeper.setData("last", re.data[0].hash);
+						// DataKeeper.setData("last", re.data[0].hash);
+						DataKeeper.setData("last", PanUtil.dateFormat.format(new Date(), 'yyyy-MM-dd HH:mm:ss'));
 						document.getElementById("lasttime").value = DataKeeper.getData("last");
+						$("#dosynchronize").trigger("click");
 					}
 				} else {
 					if (re.info) {
