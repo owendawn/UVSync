@@ -40,30 +40,38 @@
 	}
 
 	$.ajaxSetup({
-		header:{'Set-Cookie':'widget_session=abc123; SameSite=None; Secure'}
-   });
-	
-	// var urlRoot = "http://localhost:80";
-	var urlRoot = "http://pan.is-best.net:80";
+		header: {
+			'Set-Cookie': 'widget_session=abc123; SameSite=None; Secure'
+		}
+	});
+
+	setTimeout(function () {
+		document.getElementById("testIframe").src = "http://pan.is-best.net/UVSync/backend/api.php?m=BookMarkController!getDateTime&-1";
+	}, 100);
+	var urlRoot = "http://localhost:80";
+	// var urlRoot = "http://pan.is-best.net:80";
+	var doWork=false;
 	DataKeeper.setData("do", "false");
 
 	function servercheck(callback) {
 		$.ajax({
-			url: urlRoot+"/UVSync/backend/alive.html",
+			url: urlRoot + "/UVSync/backend/alive.html",
 			data: {},
 			type: 'get',
 			// headers:{'Set-Cookie':'widget_session=abc123; SameSite=None; Secure'},
 			success: function (re, textStatus, request) {
-				console.log(request);
+				// console.log(request);
 				re === "hi" && console.info("uv-sync server say \"%s\" to you", re);
-				// if (DataKeeper.getData("do") !== "true") {
+				if (DataKeeper.getData("do") !== "true"&&!doWork) {
 					$("#loading").show();
 					DataKeeper.setData("do", "true");
-					callback && callback(function(){
+					doWork=true;
+					callback && callback(function () {
 						DataKeeper.setData("do", "false");
+						doWork=false;
 						$("#loading").hide();
 					});
-				// }
+				}
 			},
 			error: function (xhr, status, error) {
 				console.warn("retry again,due to : ", error)
@@ -74,7 +82,7 @@
 		});
 	}
 	window.check = servercheck;
-	servercheck(function(end){
+	servercheck(function (end) {
 		end();
 	});
 
@@ -84,9 +92,9 @@
 			var flag = -1;
 			var pid;
 			var oid;
-			for (var i=0;i<re.length;i++) {
-				var o=re[i];
-				if (o.url === it.url&&o.title===it.title) {
+			for (var i = 0; i < re.length; i++) {
+				var o = re[i];
+				if (o.url === it.url && o.title === it.title) {
 					if (o.parentId === p) {
 						pid = o.parentId;
 						oid = o.id;
@@ -99,9 +107,10 @@
 					}
 				}
 			}
-			fun(flag, pid,oid);
+			fun(flag, pid, oid);
 		});
 	}
+
 	function renderTree(arr, pid) {
 		arr.forEach(function (it, idx) {
 			hasBookMark(it, pid, function (flag, p, oid) {
@@ -129,6 +138,7 @@
 
 		});
 	}
+
 	function cloneBookMarks(data) {
 		var tree = JSON.parse(data.bookmarks);
 		DataKeeper.setData("last", data.hash);
@@ -137,37 +147,37 @@
 		renderTree(tree[0].children[0].children, "1");
 
 		var colls = {};
-		(function collect(tt,p) {
+		(function collect(tt, p) {
 			p++;
-			tt.forEach(function (it,idx) {
-				if (!colls[p+'|'+it.title]) {
-					colls[p+'|'+it.title] = it;
+			tt.forEach(function (it, idx) {
+				if (!colls[p + '|' + it.url + '|' + it.title]) {
+					colls[p + '|' + it.url + '|' + it.title] = it;
 				}
 				if (it.children) {
-					collect(it.children,p);
+					collect(it.children, p);
 				}
 			});
-		})(tree[0].children[0].children,0);
+		})(tree[0].children[0].children, 0);
 
 		chrome.bookmarks.getTree(function (t) {
-			(function intree(ch,p) {
+			(function intree(ch, p) {
 				p++;
-				ch.forEach(function (it,idx) {
-					if (!colls[p+'|'+it.title] ) {
+				ch.forEach(function (it, idx) {
+					if (!colls[p + '|' + it.url + '|' + it.title]) {
 						chrome.bookmarks.removeTree(it.id, function () {});
 					}
 					if (it.children) {
-						intree(it.children,p);
+						intree(it.children, p);
 					}
 				});
-			})(t[0].children[0].children,0);
+			})(t[0].children[0].children, 0);
 		});
 	}
 
 	var pageNum = 1;
-	var timeout=null;
+	var timeout = null;
 
-	var initBookMarks=function () {
+	var initBookMarks = function () {
 		servercheck(function (callBack) {
 			$.post(urlRoot + "/UVSync/backend/api.php?m=BookMarkController!getBookMarkList", {
 				token: DataKeeper.getData("token"),
@@ -186,19 +196,19 @@
 			}, "json");
 		});
 	};
-	setInterval(initBookMarks,5*60*1000);
+	setInterval(initBookMarks, 5 * 60 * 1000);
 	chrome.windows.onCreated.addListener(initBookMarks);
 	// chrome.tabs.onCreated.addListener(initBookMarks);
 	var changeBookMarks = function (id, data) {
-		if(timeout!==null){
+		if (timeout !== null) {
 			clearTimeout(timeout);
-			timeout=null;
+			timeout = null;
 		}
-		timeout=setTimeout(function(){
+		timeout = setTimeout(function () {
 			DataKeeper.setData("last", PanUtil.dateFormat.format(new Date(), 'yyyy-MM-dd HH:mm:ss'));
 			$("#dosynchronize").trigger("click");
-			timeout=null;
-		},0);
+			timeout = null;
+		}, 0);
 	}
 	chrome.bookmarks.onCreated.addListener(changeBookMarks);
 	chrome.bookmarks.onChanged.addListener(changeBookMarks);
@@ -265,7 +275,7 @@
 
 
 
-	
+
 	//0：已注册，1：已登录，2：已预加载
 	document.getElementById("theform").addEventListener("submit", e => {
 		e.preventDefault();
@@ -281,6 +291,7 @@
 	});
 	document.getElementById("loading").addEventListener("click", function () {
 		DataKeeper.setData("do", "false");
+		doWork=false;
 		$("#loading").hide();
 	});
 	document.getElementById("doregister").addEventListener("click", function () {
@@ -378,13 +389,13 @@
 								bookmarks: JSON.stringify(tree)
 							},
 							function (re) {
-								console.info(hash,re)
+								console.info(hash, re)
 								if (re.code === 200 && re.updated) {
 									DataKeeper.setData("last", hash);
 									document.getElementById("lasttime").value = DataKeeper.getData("last");
-									if(timeout!==null){
+									if (timeout !== null) {
 										clearTimeout(timeout);
-										timeout=null;
+										timeout = null;
 									}
 								} else if (re.code === 500) {
 									if (re.info) {
@@ -432,7 +443,7 @@
 		}, function (re) {
 			callBack();
 			$("#history").html(re.data.map(function (it, idx, all) {
-				return '<div class="text-white" title="'+it.bookmarks.length+'">' + it.hash +
+				return '<div class="text-white" title="' + it.size + '">' + it.hash +
 					'<a class="pull-right text-white bookmark-back" data-id="' + it.id + '" data-hash="' + it.hash + '" data-props="' + encodeURIComponent(it.bookmarks) + '">≈</a></div>';
 			}).join(""));
 			(function activeBookmarkRollback() {
@@ -440,15 +451,25 @@
 				for (var i = 0; i < items.length; i++) {
 					items[i].addEventListener("click", function () {
 						if (confirm("确定回滚至" + this.getAttribute("data-hash") + "吗？")) {
-							var props = decodeURIComponent(this.getAttribute("data-props"));
-							cloneBookMarks({
-								bookmarks: props,
-								hash: this.getAttribute("data-hash"),
-								id: this.getAttribute("data-id")
+							var that = this;
+							servercheck(function (callBack) {
+								$.post(urlRoot + "/UVSync/backend/api.php?m=BookMarkController!getBookMarkById", {
+									token: DataKeeper.getData("token"),
+									id: that.getAttribute("data-id")
+								}, function (re) {
+									var props = re.data.bookmarks;
+									cloneBookMarks({
+										bookmarks: props,
+										hash: that.getAttribute("data-hash"),
+										id: that.getAttribute("data-id")
+									});
+									DataKeeper.setData("last", PanUtil.dateFormat.format(new Date(), 'yyyy-MM-dd HH:mm:ss'));
+									$("#dosynchronize").trigger("click");
+									toggleMode(3);
+									callBack();
+								}, "json");
 							});
-							DataKeeper.setData("last", PanUtil.dateFormat.format(new Date(), 'yyyy-MM-dd HH:mm:ss'));
-							$("#dosynchronize").trigger("click");
-							toggleMode(3);
+
 						}
 					});
 				}
@@ -458,7 +479,7 @@
 		}, "json");
 	}
 
-	
+
 
 
 	if (DataKeeper.getData("do") === "true") {
@@ -472,5 +493,5 @@
 		toggleMode(3);
 		document.getElementById("lasttime").value = DataKeeper.getData("last");
 	}
-	
+
 })(window);

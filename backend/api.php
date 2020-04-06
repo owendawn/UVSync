@@ -3,7 +3,7 @@ header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
 header("Access-Control-Allow-Headers: x-requested-with");
 header("Access-Control-Max-Age: 1800");
-header("Set-Cookie: widget_session=abc123; SameSite=None; Secure");
+
   // var_dump($_GET);
   $url=$_SERVER["REQUEST_URI"];
   $uri=$_SERVER["PHP_SELF"];
@@ -12,7 +12,6 @@ header("Set-Cookie: widget_session=abc123; SameSite=None; Secure");
   // var_dump($url);
   // var_dump($uri);
   // var_dump($queryStr);
-
 
   if(count($_GET)>0){
     $api=$_GET["m"];

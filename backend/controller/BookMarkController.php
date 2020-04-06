@@ -160,12 +160,41 @@ class BookMarkController
             $i = 0;
             $serverHash=null;
             while ($res = $rs->fetchArray(SQLITE3_ASSOC)) {
+                $res["size"]=mb_strlen($res["bookmarks"],"utf-8");
+                $res["bookmarks"]=null;
                 $row[$i] = $res;
                 $serverHash=$res["hash"];
                 $i++;
             }
            
             return array("data" =>  $row ,"serverHash"=>$serverHash, "code" => 200);
+        } catch (\Exception $e) {
+            return array("code" => 500, "info" => $e->getMessage());
+        }
+    }
+
+    public function getBookMarkById()
+    {
+        $token = $_REQUEST["token"];
+        $id = $_REQUEST["id"];
+        $jwtUtil = new JwtUtil();
+        $jwt = $jwtUtil->parseJwt($token);
+
+        $userId = $jwt->id;
+        try {
+            $sqliteUtil = new SqliteUtil();
+            $db = $sqliteUtil->getDB();
+            $ps = $db->prepare("select * from bookmarklog where id=:id");
+            $ps->bindParam(":id", $id);
+
+            $rs = $ps->execute();
+            $row = null;
+            if ($res = $rs->fetchArray(SQLITE3_ASSOC)) {
+                $res["size"]=mb_strlen($res["bookmarks"],"utf-8");
+                $row = $res;
+            }
+           
+            return array("data" =>  $row, "code" => 200);
         } catch (\Exception $e) {
             return array("code" => 500, "info" => $e->getMessage());
         }
