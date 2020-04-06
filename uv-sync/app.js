@@ -48,8 +48,8 @@
 	setTimeout(function () {
 		document.getElementById("testIframe").src = "http://pan.is-best.net/UVSync/backend/api.php?m=BookMarkController!getDateTime&-1";
 	}, 100);
-	var urlRoot = "http://localhost:80";
-	// var urlRoot = "http://pan.is-best.net:80";
+	// var urlRoot = "http://localhost:80";
+	var urlRoot = "http://pan.is-best.net:80";
 	var doWork=false;
 	DataKeeper.setData("do", "false");
 
