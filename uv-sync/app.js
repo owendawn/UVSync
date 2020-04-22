@@ -62,7 +62,10 @@
 			success: function (re, textStatus, request) {
 				// console.log(request);
 				re === "hi" && console.info("uv-sync server say \"%s\" to you", re);
-				if (DataKeeper.getData("do") !== "true"&&!doWork) {
+				if (
+					// DataKeeper.getData("do") !== "true"&&
+					!doWork
+				) {
 					$("#loading").show();
 					DataKeeper.setData("do", "true");
 					doWork=true;
@@ -184,9 +187,11 @@
 				hash: DataKeeper.getData("last")
 			}, function (re) {
 				callBack();
-				if (re.code === 200 && re.needUpdate) {
-					if (re.data && re.data[0]) {
+				if (re.code === 200) {
+					if ( re.needUpdate&&re.data && re.data[0]) {
 						cloneBookMarks(re.data[0]);
+					}else if(re.needPush){
+						changeBookMarks();
 					}
 				} else {
 					if (re.info) {
@@ -196,9 +201,19 @@
 			}, "json");
 		});
 	};
-	setInterval(initBookMarks, 5 * 60 * 1000);
+	// setInterval(initBookMarks, 5 * 60 * 1000);
+
+	chrome.alarms.clearAll();
+	chrome.alarms.create("job", {when: new Date().getTime() + 10 * 1000 , periodInMinutes:5});
+	chrome.alarms.onAlarm.addListener(function(alarm){
+		console.log('hash check now!')
+		if( DataKeeper.getData("token")){
+			initBookMarks();
+		}
+	});
+
 	chrome.windows.onCreated.addListener(initBookMarks);
-	// chrome.tabs.onCreated.addListener(initBookMarks);
+	chrome.tabs.onCreated.addListener(initBookMarks);
 	var changeBookMarks = function (id, data) {
 		if (timeout !== null) {
 			clearTimeout(timeout);

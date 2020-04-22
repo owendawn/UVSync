@@ -17,6 +17,7 @@
     "page": "popup.html"
   },
   "permissions": [
+    "alarms",
     "tabs",
     "activeTab",
     "storage",
