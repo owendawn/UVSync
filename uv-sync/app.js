@@ -213,7 +213,7 @@
 	});
 
 	chrome.windows.onCreated.addListener(initBookMarks);
-	chrome.tabs.onCreated.addListener(initBookMarks);
+	// chrome.tabs.onCreated.addListener(initBookMarks);
 	var changeBookMarks = function (id, data) {
 		if (timeout !== null) {
 			clearTimeout(timeout);
