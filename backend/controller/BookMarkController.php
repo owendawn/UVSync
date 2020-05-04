@@ -68,8 +68,8 @@ class BookMarkController
                     $needPush=true;
                 }
             } else {
-                $needUpdate = false;
-                $needPush=true;
+                $needUpdate = true;
+                $needPush=false;
             }
 
             return array(

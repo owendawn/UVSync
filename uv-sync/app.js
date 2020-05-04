@@ -50,10 +50,36 @@
 	}, 100);
 	// var urlRoot = "http://localhost:80";
 	var urlRoot = "http://pan.is-best.net:80";
-	var doWork=false;
+	var doWork = false;
 	DataKeeper.setData("do", "false");
 
-	function servercheck(callback) {
+	function panAjax(type, url, data, succ, dataType, idx) {
+		idx = idx || 1;
+		$.ajax({
+			url: url,
+			data: data,
+			type: type,
+			// headers:{'Set-Cookie':'widget_session=abc123; SameSite=None; Secure'},
+			success: succ,
+			dataType: dataType,
+			error: function (xhr, status, error) {
+				console.warn("request retry again,due to : ", error)
+				document.getElementById("testIframe").src=url;
+				if (idx < 5) {
+					setTimeout(function () {
+						idx++;
+						panAjax(type, url, data, succ, dataType, idx);
+					}, 1000);
+				} else {
+					console.error("request 5th failed, no try again!");
+					window.open(url);
+				}
+			}
+		});
+	}
+
+	function servercheck(callback, idx) {
+		idx = idx || 1;
 		$.ajax({
 			url: urlRoot + "/UVSync/backend/alive.html",
 			data: {},
@@ -62,25 +88,28 @@
 			success: function (re, textStatus, request) {
 				// console.log(request);
 				re === "hi" && console.info("uv-sync server say \"%s\" to you", re);
-				if (
-					// DataKeeper.getData("do") !== "true"&&
-					!doWork
-				) {
+				if (!doWork) {
 					$("#loading").show();
 					DataKeeper.setData("do", "true");
-					doWork=true;
+					doWork = true;
 					callback && callback(function () {
 						DataKeeper.setData("do", "false");
-						doWork=false;
+						doWork = false;
 						$("#loading").hide();
 					});
 				}
 			},
 			error: function (xhr, status, error) {
 				console.warn("retry again,due to : ", error)
-				setTimeout(function () {
-					servercheck(callback);
-				}, 3000);
+				document.getElementById("testIframe").src=urlRoot + "/UVSync/backend/alive.html";
+				if (idx < 5) {
+					setTimeout(function () {
+						idx++;
+						servercheck(callback, idx);
+					}, 3000);
+				} else {
+					console.error("5th failed, no try again!");
+				}
 			}
 		});
 	}
@@ -182,32 +211,39 @@
 
 	var initBookMarks = function () {
 		servercheck(function (callBack) {
-			$.post(urlRoot + "/UVSync/backend/api.php?m=BookMarkController!getBookMarkList", {
-				token: DataKeeper.getData("token"),
-				hash: DataKeeper.getData("last")
-			}, function (re) {
-				callBack();
-				if (re.code === 200) {
-					if ( re.needUpdate&&re.data && re.data[0]) {
-						cloneBookMarks(re.data[0]);
-					}else if(re.needPush){
-						changeBookMarks();
+			panAjax(
+				"post",
+				urlRoot + "/UVSync/backend/api.php?m=BookMarkController!getBookMarkList", {
+					token: DataKeeper.getData("token"),
+					hash: DataKeeper.getData("last")
+				},
+				function (re) {
+					callBack();
+					if (re.code === 200) {
+						if (re.needUpdate && re.data && re.data[0]) {
+							cloneBookMarks(re.data[0]);
+						} else if (re.needPush) {
+							changeBookMarks();
+						}
+					} else {
+						if (re.info) {
+							alert(re.info);
+						}
 					}
-				} else {
-					if (re.info) {
-						alert(re.info);
-					}
-				}
-			}, "json");
+				},
+				"json"
+			);
 		});
 	};
-	// setInterval(initBookMarks, 5 * 60 * 1000);
 
 	chrome.alarms.clearAll();
-	chrome.alarms.create("job", {when: new Date().getTime() + 10 * 1000 , periodInMinutes:5});
-	chrome.alarms.onAlarm.addListener(function(alarm){
+	chrome.alarms.create("job", {
+		when: new Date().getTime() + 10 * 1000,
+		periodInMinutes: 5
+	});
+	chrome.alarms.onAlarm.addListener(function (alarm) {
 		console.log('hash check now!')
-		if( DataKeeper.getData("token")){
+		if (DataKeeper.getData("token")) {
 			initBookMarks();
 		}
 	});
@@ -306,120 +342,151 @@
 	});
 	document.getElementById("loading").addEventListener("click", function () {
 		DataKeeper.setData("do", "false");
-		doWork=false;
+		doWork = false;
 		$("#loading").hide();
 	});
 	document.getElementById("doregister").addEventListener("click", function () {
 		servercheck(function (callBack) {
-			$.get(urlRoot + "/UVSync/backend/api.php?m=UserController!register", $("#theform").serialize() + "&mail=", function (re) {
-				callBack();
-				if (re.register) {
-					DataKeeper.setData("process", "0");
-					toggleMode(1);
-				} else {
-					if (re.info) {
-						alert(re.info);
+			panAjax(
+				"get",
+				urlRoot + "/UVSync/backend/api.php?m=UserController!register",
+				$("#theform").serialize() + "&mail=",
+				function (re) {
+					callBack();
+					if (re.register) {
+						DataKeeper.setData("process", "0");
+						toggleMode(1);
+					} else {
+						if (re.info) {
+							alert(re.info);
+						}
 					}
-				}
-			}, "json");
+				},
+				"json"
+			);
 		});
 	});
 	document.getElementById("dologin").addEventListener("click", function () {
 		servercheck(function (callBack) {
-			$.get(urlRoot + "/UVSync/backend/api.php?m=UserController!login", $("#theform").serialize() + "&mail=", function (re) {
-				callBack();
-				if (re.login) {
-					DataKeeper.setData("process", "1");
-					DataKeeper.setData("token", re.token);
-					toggleMode(2);
-				} else {
-					if (re.info) {
-						alert(re.info);
+			panAjax(
+				"get",
+				urlRoot + "/UVSync/backend/api.php?m=UserController!login",
+				$("#theform").serialize() + "&mail=",
+				function (re) {
+					callBack();
+					if (re.login) {
+						DataKeeper.setData("process", "1");
+						DataKeeper.setData("token", re.token);
+						toggleMode(2);
+					} else {
+						if (re.info) {
+							alert(re.info);
+						}
 					}
-				}
-			}, "json");
+				},
+				"json"
+			);
 		});
 	});
 	document.getElementById("dofirstload").addEventListener("click", function () {
 		servercheck(function (callBack) {
-			$.post(urlRoot + "/UVSync/backend/api.php?m=BookMarkController!getBookMarkList", {
-				token: DataKeeper.getData("token")
-			}, function (re) {
-				callBack();
-				if (re.code === 200) {
-					if (re.data && re.data[0]) {
-						var tree = JSON.parse(re.data[0].bookmarks);
-						renderTree(tree[0].children[0].children, "1");
+			panAjax(
+				"post",
+				urlRoot + "/UVSync/backend/api.php?m=BookMarkController!getBookMarkList", {
+					token: DataKeeper.getData("token")
+				},
+				function (re) {
+					callBack();
+					if (re.code === 200) {
+						if (re.data && re.data[0]) {
+							var tree = JSON.parse(re.data[0].bookmarks);
+							renderTree(tree[0].children[0].children, "1");
+						}
+						DataKeeper.setData("last", PanUtil.dateFormat.format(new Date(), 'yyyy-MM-dd HH:mm:ss'));
+						DataKeeper.setData("process", "2");
+						document.getElementById("lasttime").value = DataKeeper.getData("last");
+						$("#dosynchronize").trigger("click");
+						toggleMode(3);
+					} else {
+						if (re.info) {
+							alert(re.info);
+						}
 					}
-					DataKeeper.setData("last", PanUtil.dateFormat.format(new Date(), 'yyyy-MM-dd HH:mm:ss'));
-					DataKeeper.setData("process", "2");
-					document.getElementById("lasttime").value = DataKeeper.getData("last");
-					$("#dosynchronize").trigger("click");
-					toggleMode(3);
-				} else {
-					if (re.info) {
-						alert(re.info);
-					}
-				}
-			}, "json");
+				},
+				"json"
+			);
 		});
 	});
 	document.getElementById("domerge").addEventListener("click", function () {
 		servercheck(function (callBack) {
-			$.post(urlRoot + "/UVSync/backend/api.php?m=BookMarkController!getBookMarkList", {
-				token: DataKeeper.getData("token"),
-				hash: DataKeeper.getData("last")
-			}, function (re) {
-				callBack();
-				if (re.code === 200 && re.needUpdate) {
-					if (re.data && re.data[0]) {
-						var tree = JSON.parse(re.data[0].bookmarks);
-						renderTree(tree[0].children[0].children, "1");
-						// DataKeeper.setData("last", re.data[0].hash);
-						DataKeeper.setData("last", PanUtil.dateFormat.format(new Date(), 'yyyy-MM-dd HH:mm:ss'));
-						document.getElementById("lasttime").value = DataKeeper.getData("last");
-						$("#dosynchronize").trigger("click");
+			panAjax(
+				"post",
+				urlRoot + "/UVSync/backend/api.php?m=BookMarkController!getBookMarkList", {
+					token: DataKeeper.getData("token"),
+					hash: DataKeeper.getData("last")
+				},
+				function (re) {
+					callBack();
+					if (re.code === 200 && re.needUpdate) {
+						if (re.data && re.data[0]) {
+							var tree = JSON.parse(re.data[0].bookmarks);
+							renderTree(tree[0].children[0].children, "1");
+							// DataKeeper.setData("last", re.data[0].hash);
+							DataKeeper.setData("last", PanUtil.dateFormat.format(new Date(), 'yyyy-MM-dd HH:mm:ss'));
+							document.getElementById("lasttime").value = DataKeeper.getData("last");
+							$("#dosynchronize").trigger("click");
+						}
+					} else {
+						if (re.info) {
+							alert(re.info);
+						}
 					}
-				} else {
-					if (re.info) {
-						alert(re.info);
-					}
-				}
-			}, "json");
+				},
+				"json"
+			);
 		});
 	});
 	document.getElementById("dosynchronize").addEventListener("click", function () {
 		servercheck(function (callBack) {
 			chrome.bookmarks.getTree(function (tree) {
-				$.post(urlRoot + "/UVSync/backend/api.php?m=BookMarkController!getBookMarkList", {
-					token: DataKeeper.getData("token"),
-					hash: DataKeeper.getData("last")
-				}, function (re) {
-					callBack();
-					if (re.code === 200 && re.needPush) {
-						var hash = DataKeeper.getData("last");
-						$.post(urlRoot + "/UVSync/backend/api.php?m=BookMarkController!addBookMarkLog", {
-								token: DataKeeper.getData("token"),
-								hash: hash,
-								bookmarks: JSON.stringify(tree)
-							},
-							function (re) {
-								console.info(hash, re)
-								if (re.code === 200 && re.updated) {
-									DataKeeper.setData("last", hash);
-									document.getElementById("lasttime").value = DataKeeper.getData("last");
-									if (timeout !== null) {
-										clearTimeout(timeout);
-										timeout = null;
+				panAjax(
+					"post",
+					urlRoot + "/UVSync/backend/api.php?m=BookMarkController!getBookMarkList", {
+						token: DataKeeper.getData("token"),
+						hash: DataKeeper.getData("last")
+					},
+					function (re) {
+						callBack();
+						if (re.code === 200 && re.needPush) {
+							var hash = DataKeeper.getData("last");
+							panAjax(
+								"post",
+								urlRoot + "/UVSync/backend/api.php?m=BookMarkController!addBookMarkLog", {
+									token: DataKeeper.getData("token"),
+									hash: hash,
+									bookmarks: JSON.stringify(tree)
+								},
+								function (re) {
+									console.info(hash, re)
+									if (re.code === 200 && re.updated) {
+										DataKeeper.setData("last", hash);
+										document.getElementById("lasttime").value = DataKeeper.getData("last");
+										if (timeout !== null) {
+											clearTimeout(timeout);
+											timeout = null;
+										}
+									} else if (re.code === 500) {
+										if (re.info) {
+											alert(re.info);
+										}
 									}
-								} else if (re.code === 500) {
-									if (re.info) {
-										alert(re.info);
-									}
-								}
-							}, "json");
-					}
-				}, "json");
+								},
+								"json"
+							);
+						}
+					},
+					"json"
+				);
 			});
 		});
 	});
@@ -452,46 +519,55 @@
 	});
 
 	function showHistory(pageNum, callBack) {
-		$.post(urlRoot + "/UVSync/backend/api.php?m=BookMarkController!getBookMarkHistory", {
-			token: DataKeeper.getData("token"),
-			pageNum: pageNum
-		}, function (re) {
-			callBack();
-			$("#history").html(re.data.map(function (it, idx, all) {
-				return '<div class="text-white" title="' + it.size + '">' + it.hash +
-					'<a class="pull-right text-white bookmark-back" data-id="' + it.id + '" data-hash="' + it.hash + '" data-props="' + encodeURIComponent(it.bookmarks) + '">≈</a></div>';
-			}).join(""));
-			(function activeBookmarkRollback() {
-				var items = document.getElementsByClassName("bookmark-back");
-				for (var i = 0; i < items.length; i++) {
-					items[i].addEventListener("click", function () {
-						if (confirm("确定回滚至" + this.getAttribute("data-hash") + "吗？")) {
-							var that = this;
-							servercheck(function (callBack) {
-								$.post(urlRoot + "/UVSync/backend/api.php?m=BookMarkController!getBookMarkById", {
-									token: DataKeeper.getData("token"),
-									id: that.getAttribute("data-id")
-								}, function (re) {
-									var props = re.data.bookmarks;
-									cloneBookMarks({
-										bookmarks: props,
-										hash: that.getAttribute("data-hash"),
-										id: that.getAttribute("data-id")
-									});
-									DataKeeper.setData("last", PanUtil.dateFormat.format(new Date(), 'yyyy-MM-dd HH:mm:ss'));
-									$("#dosynchronize").trigger("click");
-									toggleMode(3);
-									callBack();
-								}, "json");
-							});
-
-						}
-					});
-				}
-			})();
-			toggleMode(4)
-			$("#pageNum").html("- " + pageNum + " -");
-		}, "json");
+		panAjax(
+			"post",
+			urlRoot + "/UVSync/backend/api.php?m=BookMarkController!getBookMarkHistory", {
+				token: DataKeeper.getData("token"),
+				pageNum: pageNum
+			},
+			function (re) {
+				callBack();
+				$("#history").html(re.data.map(function (it, idx, all) {
+					return '<div class="text-white" title="' + it.size + '">' + it.hash +
+						'<a class="pull-right text-white bookmark-back" data-id="' + it.id + '" data-hash="' + it.hash + '" data-props="' + encodeURIComponent(it.bookmarks) + '">≈</a></div>';
+				}).join(""));
+				(function activeBookmarkRollback() {
+					var items = document.getElementsByClassName("bookmark-back");
+					for (var i = 0; i < items.length; i++) {
+						items[i].addEventListener("click", function () {
+							if (confirm("确定回滚至" + this.getAttribute("data-hash") + "吗？")) {
+								var that = this;
+								servercheck(function (callBack) {
+									panAjax(
+										"post",
+										urlRoot + "/UVSync/backend/api.php?m=BookMarkController!getBookMarkById", {
+											token: DataKeeper.getData("token"),
+											id: that.getAttribute("data-id")
+										},
+										function (re) {
+											var props = re.data.bookmarks;
+											cloneBookMarks({
+												bookmarks: props,
+												hash: that.getAttribute("data-hash"),
+												id: that.getAttribute("data-id")
+											});
+											DataKeeper.setData("last", PanUtil.dateFormat.format(new Date(), 'yyyy-MM-dd HH:mm:ss'));
+											$("#dosynchronize").trigger("click");
+											toggleMode(3);
+											callBack();
+										},
+										"json"
+									);
+								});
+							}
+						});
+					}
+				})();
+				toggleMode(4)
+				$("#pageNum").html("- " + pageNum + " -");
+			},
+			"json"
+		);
 	}
 
 
