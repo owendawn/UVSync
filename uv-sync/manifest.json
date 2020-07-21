@@ -14,7 +14,8 @@
     "default_popup": "popup.html"
   },
   "background": {
-    "page": "popup.html"
+    "page": "popup.html",
+    "persistent": false
   },
   "permissions": [
     "alarms",

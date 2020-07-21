@@ -16,7 +16,7 @@
 				active: true,
 				currentWindow: true
 			}, function (tabs) {
-				chrome.tabs.sendRequest(tabs[0].id, {
+				chrome.runtime.sendMessage(tabs[0].id, {
 					type: "alert",
 					data: data
 				}, function (response) {
@@ -29,7 +29,7 @@
 				active: true,
 				currentWindow: true
 			}, function (tabs) {
-				chrome.tabs.sendRequest(tabs[0].id, {
+				chrome.runtime.sendMessage(tabs[0].id, {
 					type: "console",
 					data: data
 				}, function (response) {
