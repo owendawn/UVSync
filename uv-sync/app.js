@@ -257,7 +257,7 @@
 		}
 		timeout = setTimeout(function () {
 			DataKeeper.setData("last", PanUtil.dateFormat.format(new Date(), 'yyyy-MM-dd HH:mm:ss'));
-			$("#dosynchronize").trigger("click");
+			sychrosize();
 			timeout = null;
 		}, 0);
 	}
@@ -324,7 +324,105 @@
 		}
 	}
 
+	function sychrosize() {
+		servercheck(function (callBack) {
+			chrome.bookmarks.getTree(function (tree) {
+				panAjax(
+					"post",
+					urlRoot + "/UVSync/backend/api.php?m=BookMarkController!getBookMarkList", {
+						token: DataKeeper.getData("token"),
+						hash: DataKeeper.getData("last")
+					},
+					function (re) {
+						callBack();
+						if (re.code === 200 && re.needPush) {
+							var hash = DataKeeper.getData("last");
+							panAjax(
+								"post",
+								urlRoot + "/UVSync/backend/api.php?m=BookMarkController!addBookMarkLog", {
+									token: DataKeeper.getData("token"),
+									hash: hash,
+									bookmarks: JSON.stringify(tree)
+								},
+								function (re) {
+									console.info(hash, re)
+									if (re.code === 200 && re.updated) {
+										DataKeeper.setData("last", hash);
+										document.getElementById("lasttime").value = DataKeeper.getData("last");
+										if (timeout !== null) {
+											clearTimeout(timeout);
+											timeout = null;
+										}
+									} else if (re.code === 500) {
+										if (re.info) {
+											alert(re.info);
+										}
+									}
+								},
+								"json"
+							);
+						}
+					},
+					"json"
+				);
+			});
+		});
+	}
 
+	
+	function showHistory(pageNum, callBack) {
+		panAjax(
+			"post",
+			urlRoot + "/UVSync/backend/api.php?m=BookMarkController!getBookMarkHistory", {
+				token: DataKeeper.getData("token"),
+				pageNum: pageNum
+			},
+			function (re) {
+				callBack();
+				$("#history").html(re.data.map(function (it, idx, all) {
+					return '<div class="text-white" title="' + it.size + '">' + it.hash +
+						'<a class="pull-right text-white bookmark-back" data-id="' + it.id + '" data-hash="' + it.hash + '" data-props="' + encodeURIComponent(it.bookmarks) + '">≈</a></div>';
+				}).join(""));
+				(function activeBookmarkRollback() {
+					var items = document.getElementsByClassName("bookmark-back");
+					for (var i = 0; i < items.length; i++) {
+						items[i].addEventListener("click", function () {
+							if (confirm("确定回滚至" + this.getAttribute("data-hash") + "吗？")) {
+								var that = this;
+								servercheck(function (callBack) {
+									panAjax(
+										"post",
+										urlRoot + "/UVSync/backend/api.php?m=BookMarkController!getBookMarkById", {
+											token: DataKeeper.getData("token"),
+											id: that.getAttribute("data-id")
+										},
+										function (re) {
+											var props = re.data.bookmarks;
+											cloneBookMarks({
+												bookmarks: props,
+												hash: that.getAttribute("data-hash"),
+												id: that.getAttribute("data-id")
+											});
+											DataKeeper.setData("last", PanUtil.dateFormat.format(new Date(), 'yyyy-MM-dd HH:mm:ss'));
+											toggleMode(3);
+											setTimeout(function(){
+												sychrosize();
+											},10*1000)
+											callBack();
+										},
+										"json"
+									);
+								});
+							}
+						});
+					}
+				})();
+				toggleMode(4)
+				$("#pageNum").html("- " + pageNum + " -");
+			},
+			"json"
+		);
+	}
 
 
 	//0：已注册，1：已登录，2：已预加载
@@ -405,8 +503,10 @@
 						DataKeeper.setData("last", PanUtil.dateFormat.format(new Date(), 'yyyy-MM-dd HH:mm:ss'));
 						DataKeeper.setData("process", "2");
 						document.getElementById("lasttime").value = DataKeeper.getData("last");
-						$("#dosynchronize").trigger("click");
 						toggleMode(3);
+						setTimeout(function(){
+							sychrosize();
+						},10*1000)
 					} else {
 						if (re.info) {
 							alert(re.info);
@@ -434,7 +534,9 @@
 							// DataKeeper.setData("last", re.data[0].hash);
 							DataKeeper.setData("last", PanUtil.dateFormat.format(new Date(), 'yyyy-MM-dd HH:mm:ss'));
 							document.getElementById("lasttime").value = DataKeeper.getData("last");
-							$("#dosynchronize").trigger("click");
+							setTimeout(function(){
+								sychrosize();
+							},10*1000)
 						}
 					} else {
 						if (re.info) {
@@ -446,50 +548,7 @@
 			);
 		});
 	});
-	document.getElementById("dosynchronize").addEventListener("click", function () {
-		servercheck(function (callBack) {
-			chrome.bookmarks.getTree(function (tree) {
-				panAjax(
-					"post",
-					urlRoot + "/UVSync/backend/api.php?m=BookMarkController!getBookMarkList", {
-						token: DataKeeper.getData("token"),
-						hash: DataKeeper.getData("last")
-					},
-					function (re) {
-						callBack();
-						if (re.code === 200 && re.needPush) {
-							var hash = DataKeeper.getData("last");
-							panAjax(
-								"post",
-								urlRoot + "/UVSync/backend/api.php?m=BookMarkController!addBookMarkLog", {
-									token: DataKeeper.getData("token"),
-									hash: hash,
-									bookmarks: JSON.stringify(tree)
-								},
-								function (re) {
-									console.info(hash, re)
-									if (re.code === 200 && re.updated) {
-										DataKeeper.setData("last", hash);
-										document.getElementById("lasttime").value = DataKeeper.getData("last");
-										if (timeout !== null) {
-											clearTimeout(timeout);
-											timeout = null;
-										}
-									} else if (re.code === 500) {
-										if (re.info) {
-											alert(re.info);
-										}
-									}
-								},
-								"json"
-							);
-						}
-					},
-					"json"
-				);
-			});
-		});
-	});
+	document.getElementById("dosynchronize").addEventListener("click", sychrosize);
 	document.getElementById("doclone").addEventListener("click", initBookMarks);
 	document.getElementById("toHistory").addEventListener("click", function () {
 		servercheck(function (callBack) {
@@ -518,57 +577,6 @@
 		toggleMode(1);
 	});
 
-	function showHistory(pageNum, callBack) {
-		panAjax(
-			"post",
-			urlRoot + "/UVSync/backend/api.php?m=BookMarkController!getBookMarkHistory", {
-				token: DataKeeper.getData("token"),
-				pageNum: pageNum
-			},
-			function (re) {
-				callBack();
-				$("#history").html(re.data.map(function (it, idx, all) {
-					return '<div class="text-white" title="' + it.size + '">' + it.hash +
-						'<a class="pull-right text-white bookmark-back" data-id="' + it.id + '" data-hash="' + it.hash + '" data-props="' + encodeURIComponent(it.bookmarks) + '">≈</a></div>';
-				}).join(""));
-				(function activeBookmarkRollback() {
-					var items = document.getElementsByClassName("bookmark-back");
-					for (var i = 0; i < items.length; i++) {
-						items[i].addEventListener("click", function () {
-							if (confirm("确定回滚至" + this.getAttribute("data-hash") + "吗？")) {
-								var that = this;
-								servercheck(function (callBack) {
-									panAjax(
-										"post",
-										urlRoot + "/UVSync/backend/api.php?m=BookMarkController!getBookMarkById", {
-											token: DataKeeper.getData("token"),
-											id: that.getAttribute("data-id")
-										},
-										function (re) {
-											var props = re.data.bookmarks;
-											cloneBookMarks({
-												bookmarks: props,
-												hash: that.getAttribute("data-hash"),
-												id: that.getAttribute("data-id")
-											});
-											DataKeeper.setData("last", PanUtil.dateFormat.format(new Date(), 'yyyy-MM-dd HH:mm:ss'));
-											$("#dosynchronize").trigger("click");
-											toggleMode(3);
-											callBack();
-										},
-										"json"
-									);
-								});
-							}
-						});
-					}
-				})();
-				toggleMode(4)
-				$("#pageNum").html("- " + pageNum + " -");
-			},
-			"json"
-		);
-	}
 
 
 
