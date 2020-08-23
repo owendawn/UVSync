@@ -54,30 +54,45 @@
 	DataKeeper.setData("do", "false");
 
 	function panAjax(type, url, data, succ, dataType, idx) {
-		idx = idx || 1;
-		$.ajax({
-			url: url,
-			data: data,
-			type: type,
-			// headers:{'Set-Cookie':'widget_session=abc123; SameSite=None; Secure'},
-			success: succ,
-			dataType: dataType,
-			error: function (xhr, status, error) {
-				console.warn("request retry again,due to : ", error)
-				document.getElementById("testIframe").src=url;
-				if (idx < 5) {
-					setTimeout(function () {
-						idx++;
-						panAjax(type, url, data, succ, dataType, idx);
-					}, 1000);
-				} else {
-					console.error("request 5th failed, no try again!");
-					window.open(url);
-				}
+		onLine(function (flag) {
+			if (flag) {
+				idx = idx || 1;
+				$.ajax({
+					url: url,
+					data: data,
+					type: type,
+					// headers:{'Set-Cookie':'widget_session=abc123; SameSite=None; Secure'},
+					success: succ,
+					dataType: dataType,
+					error: function (xhr, status, error) {
+						console.warn("request retry again,due to : ", error)
+						document.getElementById("testIframe").src = url;
+						if (idx < 5) {
+							setTimeout(function () {
+								idx++;
+								panAjax(type, url, data, succ, dataType, idx);
+							}, 1000);
+						} else {
+							console.error("request 5th failed, no try again!");
+							window.open(url);
+						}
+					}
+				});
+			} else {
+				console.error("网络异常")
 			}
-		});
+		})
 	}
-
+	function onLine(callback) {
+		var img = new Image();
+		img.src = 'https://www.baidu.com/favicon.ico?_t=' + Date.now();
+		img.onload = function () {
+			if (callback) callback(true)
+		};
+		img.onerror = function () {
+			if (callback) callback(false)
+		};
+	}
 	function servercheck(callback, idx) {
 		idx = idx || 1;
 		$.ajax({
@@ -101,7 +116,7 @@
 			},
 			error: function (xhr, status, error) {
 				console.warn("retry again,due to : ", error)
-				document.getElementById("testIframe").src=urlRoot + "/UVSync/backend/alive.html";
+				document.getElementById("testIframe").src = urlRoot + "/UVSync/backend/alive.html";
 				if (idx < 5) {
 					setTimeout(function () {
 						idx++;
@@ -196,7 +211,7 @@
 				p++;
 				ch.forEach(function (it, idx) {
 					if (!colls[p + '|' + it.url + '|' + it.title]) {
-						chrome.bookmarks.removeTree(it.id, function () {});
+						chrome.bookmarks.removeTree(it.id, function () { });
 					}
 					if (it.children) {
 						intree(it.children, p);
@@ -214,9 +229,9 @@
 			panAjax(
 				"post",
 				urlRoot + "/UVSync/backend/api.php?m=BookMarkController!getBookMarkList", {
-					token: DataKeeper.getData("token"),
-					hash: DataKeeper.getData("last")
-				},
+				token: DataKeeper.getData("token"),
+				hash: DataKeeper.getData("last")
+			},
 				function (re) {
 					callBack();
 					if (re.code === 200) {
@@ -330,9 +345,9 @@
 				panAjax(
 					"post",
 					urlRoot + "/UVSync/backend/api.php?m=BookMarkController!getBookMarkList", {
-						token: DataKeeper.getData("token"),
-						hash: DataKeeper.getData("last")
-					},
+					token: DataKeeper.getData("token"),
+					hash: DataKeeper.getData("last")
+				},
 					function (re) {
 						callBack();
 						if (re.code === 200 && re.needPush) {
@@ -340,10 +355,10 @@
 							panAjax(
 								"post",
 								urlRoot + "/UVSync/backend/api.php?m=BookMarkController!addBookMarkLog", {
-									token: DataKeeper.getData("token"),
-									hash: hash,
-									bookmarks: JSON.stringify(tree)
-								},
+								token: DataKeeper.getData("token"),
+								hash: hash,
+								bookmarks: JSON.stringify(tree)
+							},
 								function (re) {
 									console.info(hash, re)
 									if (re.code === 200 && re.updated) {
@@ -369,14 +384,14 @@
 		});
 	}
 
-	
+
 	function showHistory(pageNum, callBack) {
 		panAjax(
 			"post",
 			urlRoot + "/UVSync/backend/api.php?m=BookMarkController!getBookMarkHistory", {
-				token: DataKeeper.getData("token"),
-				pageNum: pageNum
-			},
+			token: DataKeeper.getData("token"),
+			pageNum: pageNum
+		},
 			function (re) {
 				callBack();
 				$("#history").html(re.data.map(function (it, idx, all) {
@@ -393,9 +408,9 @@
 									panAjax(
 										"post",
 										urlRoot + "/UVSync/backend/api.php?m=BookMarkController!getBookMarkById", {
-											token: DataKeeper.getData("token"),
-											id: that.getAttribute("data-id")
-										},
+										token: DataKeeper.getData("token"),
+										id: that.getAttribute("data-id")
+									},
 										function (re) {
 											var props = re.data.bookmarks;
 											cloneBookMarks({
@@ -405,9 +420,9 @@
 											});
 											DataKeeper.setData("last", PanUtil.dateFormat.format(new Date(), 'yyyy-MM-dd HH:mm:ss'));
 											toggleMode(3);
-											setTimeout(function(){
+											setTimeout(function () {
 												sychrosize();
-											},10*1000)
+											}, 10 * 1000)
 											callBack();
 										},
 										"json"
@@ -491,8 +506,8 @@
 			panAjax(
 				"post",
 				urlRoot + "/UVSync/backend/api.php?m=BookMarkController!getBookMarkList", {
-					token: DataKeeper.getData("token")
-				},
+				token: DataKeeper.getData("token")
+			},
 				function (re) {
 					callBack();
 					if (re.code === 200) {
@@ -504,9 +519,9 @@
 						DataKeeper.setData("process", "2");
 						document.getElementById("lasttime").value = DataKeeper.getData("last");
 						toggleMode(3);
-						setTimeout(function(){
+						setTimeout(function () {
 							sychrosize();
-						},10*1000)
+						}, 10 * 1000)
 					} else {
 						if (re.info) {
 							alert(re.info);
@@ -522,9 +537,9 @@
 			panAjax(
 				"post",
 				urlRoot + "/UVSync/backend/api.php?m=BookMarkController!getBookMarkList", {
-					token: DataKeeper.getData("token"),
-					hash: DataKeeper.getData("last")
-				},
+				token: DataKeeper.getData("token"),
+				hash: DataKeeper.getData("last")
+			},
 				function (re) {
 					callBack();
 					if (re.code === 200 && re.needUpdate) {
@@ -534,9 +549,9 @@
 							// DataKeeper.setData("last", re.data[0].hash);
 							DataKeeper.setData("last", PanUtil.dateFormat.format(new Date(), 'yyyy-MM-dd HH:mm:ss'));
 							document.getElementById("lasttime").value = DataKeeper.getData("last");
-							setTimeout(function(){
+							setTimeout(function () {
 								sychrosize();
-							},10*1000)
+							}, 10 * 1000)
 						}
 					} else {
 						if (re.info) {
