@@ -68,8 +68,8 @@ class BookMarkController
                     $needPush=true;
                 }
             } else {
-                $needUpdate = true;
-                $needPush=false;
+                $needUpdate = false;
+                $needPush=true;
             }
 
             return array(
@@ -106,7 +106,7 @@ class BookMarkController
                 if($count>0){
                     return array("code" => 200,"info"=>"the hash is exists","updated"=>false);
                 }else{
-                    $ps = $db->prepare("select a.* from bookmarklog a, (select max(create_at) as last,userid  from bookmarklog  where userid=:userId )b where a.userid=b.userid and a.create_at=b.last and (julianday(datetime('now','+8 hour'))-julianday(a.hash))*24*60<1");
+                    $ps = $db->prepare("select a.* from bookmarklog a, (select max(create_at) as last,userid  from bookmarklog  where userid=:userId )b where a.userid=b.userid and a.create_at=b.last and (julianday(datetime('now','+8 hour'))-julianday(a.hash))<5*1.0/24/60");
                     $ps->bindParam(":userId", $userId);
                     $rs = $ps->execute();
                     if ($res = $rs->fetchArray(SQLITE3_ASSOC)) {
