@@ -24,7 +24,9 @@
     "storage",
     "bookmarks",
     "management",
-    "http://*/*"
+    "notifications",
+    "http://*/*",
+    "https://*/*"
   ],
   "content_scripts": [
     {
@@ -33,7 +35,7 @@
         "http://*/*",
         "https://*/*"
       ],
-      "js": ["core.js"],
+      "js": ["content.js"],
       "all_frames": true
     }
   ]

@@ -10,13 +10,13 @@
 			window.localStorage.removeItem(k);
 		}
 	};
-	var DataNotify = {
+	window.DataNotify = {
 		alert: function (data) {
 			chrome.tabs.query({
 				active: true,
 				currentWindow: true
 			}, function (tabs) {
-				chrome.runtime.sendMessage(tabs[0].id, {
+				chrome.tabs.sendMessage(tabs[0].id, {
 					type: "alert",
 					data: data
 				}, function (response) {
@@ -29,12 +29,23 @@
 				active: true,
 				currentWindow: true
 			}, function (tabs) {
-				chrome.runtime.sendMessage(tabs[0].id, {
+				console.log(tabs)
+				chrome.tabs.sendMessage(tabs[0].id, {
 					type: "console",
 					data: data
 				}, function (response) {
 					console.log(response);
 				});
+			});
+		},
+		notify: function (data) {
+			chrome.notifications.create(new Date().getTime() + "", {
+				title: 'UVSync书签同步',
+				message: data + "",
+				type: 'basic',
+				iconUrl: 'https://2ue.github.io/images/common/avatar.png',
+			}, (page) => {
+				console.log(arguments)
 			});
 		}
 	}
@@ -74,7 +85,7 @@
 							}, 1000);
 						} else {
 							console.error("request 5th failed, no try again!");
-							window.open(url);
+							DataNotify.notify("同步数据请求已失败5次！！！");
 						}
 					}
 				});
