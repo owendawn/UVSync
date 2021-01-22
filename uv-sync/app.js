@@ -38,7 +38,7 @@
 				});
 			});
 		},
-		notify: function (data) {
+		notify: function (data,url) {
 			chrome.notifications.create(new Date().getTime() + "", {
 				title: 'UVSync书签同步',
 				message: data + "",
@@ -46,6 +46,10 @@
 				iconUrl: 'https://2ue.github.io/images/common/avatar.png',
 			}, (page) => {
 				console.log(arguments)
+			});
+			
+			chrome.notifications.onClicked.addListener(()=>{
+				window.open(url);
 			});
 		}
 	}
@@ -76,7 +80,7 @@
 					success: succ,
 					dataType: dataType,
 					error: function (xhr, status, error) {
-						console.warn("request retry again,due to : ", error)
+						console.info("request retry again,due to : ", error)
 						document.getElementById("testIframe").src = url;
 						if (idx < 5) {
 							setTimeout(function () {
@@ -84,8 +88,8 @@
 								panAjax(type, url, data, succ, dataType, idx);
 							}, 1000);
 						} else {
-							console.error("request 5th failed, no try again!");
-							DataNotify.notify("同步数据请求已失败5次！！！");
+							console.info("request 5th failed, no try again!");
+							DataNotify.notify("同步数据请求已失败5次！！！",urlRoot + "/UVSync/backend/api.php?m=BookMarkController!getBookMarkList");
 						}
 					}
 				});
